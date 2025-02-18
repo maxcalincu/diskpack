@@ -12,38 +12,6 @@ std::ostream& operator<<(std::ostream& out, const Interval& x);
 
 #define INSPECT(expr) std::cout << #expr << ": " << (expr) << "\n";
 
-// Interval cosine(const Interval &base_radius, const Interval &a_radius, const Interval &b_radius);
-// Interval sine(const Interval &base_radius, const Interval &a_radius, const Interval &b_radius);
-
-// class Angle {
-//     Interval cos;
-//     Interval sin;
-    
-//     public:
-    
-//     Angle();
-//     Angle(const BaseType &phi);
-//     explicit Angle(const Interval &base_radius, const Interval &a_radius, const Interval &b_radius);
-//     explicit Angle(const Interval &cos_, const Interval &sin_);
-//     Angle(const Angle &other);
-//     Angle(Angle &&other);
-    
-//     Angle& operator=(const Angle &other);
-
-//     Angle& operator=(Angle &&other);
-    
-//     Interval get_sin() const;
-//     Interval get_cos() const;
-//     Angle operator+(const Angle &other) const;
-//     Angle operator-(const Angle &other) const;
-//     Angle& operator+=(const Angle &other);
-//     Angle& operator-=(const Angle &other);
-//     bool operator<(const Angle &other) const;
-//     bool operator>(const Angle &other) const;
-
-// };
-// std::ostream& operator<<(std::ostream& out, const Angle& a);
-
 class Disk {
     Interval center_x, center_y, radius;
     size_t disk_type;
