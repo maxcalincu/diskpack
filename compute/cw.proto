@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package CDP;
+
+message Disk {
+    double x = 1;
+    double y = 2;
+    double radius = 3;
+    int32 size_type = 4;
+}
+
+message Packing {
+    int32 dimensions = 1;
+    repeated Disk disks = 2;
+}
