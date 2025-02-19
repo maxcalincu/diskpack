@@ -26,13 +26,13 @@ void WritePackingToFile(CDP::Packing &packing, const std::string &filename){
         }
 }
 
-inline bool CheckValidity(const std::list<Disk> &packing, const Disk &new_disk) {
+inline bool PackingGenerator::HasIntersection(const Disk &new_disk) {
     for(auto &disk : packing) {
         if(new_disk.intersects(disk)) {
-            return false;
+            return true;
         }
     }
-    return true;
+    return false;
 }
 
 inline std::pair<Interval, Interval> GetNextCenter(const Interval &x_prime, const Interval &y_prime, const Interval &base_radius, const Interval &previous_radius,  const Interval &next_radius) {
@@ -55,9 +55,8 @@ inline std::pair<Interval, Interval> GetNextCenter(const Interval &x_prime, cons
     return std::make_pair(p * x_prime - q * y_prime, p * y_prime + q * x_prime);
 }
 
-PackingStatus GapFill(  const std::vector<Interval> &radii, std::list<Disk> &packing, std::vector<int> &frequency_table, const BaseType &packing_radius, QueueType &disk_queue, const Disk &base, 
-                        std::vector<Disk*> &corona, const std::pair<Interval, Interval> &previous_leaf) {
-    
+PackingStatus PackingGenerator::GapFill(const Disk &base, std::vector<Disk*> &corona, const std::pair<Interval, Interval> &previous_leaf) {
+    // std::cout << "gapfill\n";
     assert(radii.size() == frequency_table.size());
 
     std::vector<size_t> shuffle(radii.size());
@@ -70,7 +69,7 @@ PackingStatus GapFill(  const std::vector<Interval> &radii, std::list<Disk> &pac
             return PackingStatus::invalid;
         }
         if(corona.back()->tangent(*corona.front())) {
-            return AddAnotherDisk(radii, packing, frequency_table, packing_radius, disk_queue);
+            return AddAnotherDisk();
         }
     }
     for(size_t i = 0; i < radii.size(); ++i) {
@@ -78,7 +77,7 @@ PackingStatus GapFill(  const std::vector<Interval> &radii, std::list<Disk> &pac
         GetNextCenter(previous_leaf.first, previous_leaf.second, base.get_radius(), corona.back()->get_radius(), radii[shuffle[i]]); 
 
         Disk new_disk(center.first + base.get_center_x(), center.second + base.get_center_y(), radii[shuffle[i]], shuffle[i]);
-        if(!CheckValidity(packing, new_disk)) {
+        if(HasIntersection(new_disk)) {
             continue;
         }
         packing.push_back(std::move(new_disk));
@@ -88,7 +87,7 @@ PackingStatus GapFill(  const std::vector<Interval> &radii, std::list<Disk> &pac
 
         // packing.emplace_back(base.get_center_x(), base.get_center_y(), Interval{0.2}, 4);
 
-        auto status = GapFill(radii, packing, frequency_table, packing_radius, disk_queue, base, corona, center);
+        auto status = GapFill(base, corona, center);
         if(status == PackingStatus::complete) {
             return PackingStatus::complete;
         }
@@ -105,7 +104,7 @@ PackingStatus GapFill(  const std::vector<Interval> &radii, std::list<Disk> &pac
     return PackingStatus::invalid;
 }
 
-inline bool IsInBounds(const Disk* disk, const BaseType &packing_radius) {
+inline bool PackingGenerator::IsInBounds(const Disk* disk) {
     if(disk == nullptr) {
         return false;
     }
@@ -120,7 +119,7 @@ struct DiskClockwiseCompare{
         center_x = base.get_center_x();
         center_y = base.get_center_y();
     }
-    inline bool operator()(const Disk* a, const Disk* b) const {
+    bool operator()(const Disk* a, const Disk* b) const {
         auto ax = a->get_center_x() - center_x;
         auto ay = a->get_center_y() - center_y;
         auto bx = b->get_center_x() - center_x;
@@ -133,7 +132,7 @@ struct DiskClockwiseCompare{
     }
 };
 
-inline void GetSortedCorona(const Disk &base, std::list<Disk> &packing, std::vector<Disk*> &corona) {
+inline void PackingGenerator::GetSortedCorona(const Disk &base, std::vector<Disk*> &corona) {
     assert(corona.empty());
     for(auto &disk : packing) {
         if(base.tangent(disk)) {
@@ -153,51 +152,57 @@ inline void GetSortedCorona(const Disk &base, std::list<Disk> &packing, std::vec
     }
 }
 
-inline PackingStatus GapFill(  const std::vector<Interval> &radii, std::list<Disk> &packing, std::vector<int> &frequency_table, const BaseType &packing_radius, QueueType &disk_queue, const Disk &base) {
+PackingStatus PackingGenerator::AddAnotherDisk() {
+    // std::cout << "add\n";
+    Disk* base = nullptr;
+    while(!IsInBounds(base) && !disk_queue.empty()) {
+        base = *(disk_queue.begin());
+        disk_queue.erase(disk_queue.begin());
+    }
+    if(!IsInBounds(base)) {
+        return (std::find(frequency_table.begin(), frequency_table.end(), 0) != frequency_table.end() ? PackingStatus::invalid : PackingStatus::complete); 
+    }
+
     std::vector<Disk*> corona(0);
-    GetSortedCorona(base, packing, corona);
+    GetSortedCorona(*base, corona);
     for(size_t i = 0; i + 1< corona.size(); ++i) {
         if(!corona[i]->tangent(*corona[i + 1])) {
             std::cout << "Corona is not continuous!\n";
-            packing.emplace_back(base.get_center_x(), base.get_center_y(), Interval{0.2}, 4);
+            packing.emplace_back(base->get_center_x(), base->get_center_y(), Interval{0.2}, 4);
             return PackingStatus::complete;
         }
         // assert(corona[i]->tangent(*corona[i + 1]));
     }
+    auto previous_leaf = (corona.empty() ?  std::make_pair(0.0L, 0.0L) : 
+                                            std::make_pair( corona.back()->get_center_x() - median(base->get_center_x()),
+                                                            corona.back()->get_center_y() - median(base->get_center_y())));
     
-    return GapFill(radii, packing, frequency_table, packing_radius, disk_queue, base, corona, 
-    (corona.empty() ? std::make_pair(0.0L, 0.0L) : std::make_pair(corona.back()->get_center_x() - median(base.get_center_x()),corona.back()->get_center_y() - median(base.get_center_y()))));
-}
-
-PackingStatus AddAnotherDisk(const std::vector<Interval> &radii, std::list<Disk> &packing, std::vector<int> &frequency_table, const BaseType &packing_radius, QueueType &disk_queue) {
-    // std::cout << "add\n";
-    Disk* base = nullptr;
-    while(!IsInBounds(base, packing_radius) && !disk_queue.empty()) {
-        base = *(disk_queue.begin());
-        disk_queue.erase(disk_queue.begin());
-    }
-    if(!IsInBounds(base, packing_radius)) {
-        return (std::find(frequency_table.begin(), frequency_table.end(), 0) != frequency_table.end() ? PackingStatus::invalid : PackingStatus::complete); 
-    }
-    auto status = GapFill(radii, packing, frequency_table, packing_radius, disk_queue, *base);
+    auto status = GapFill(*base, corona, previous_leaf);;
     if(status == PackingStatus::invalid) {
         disk_queue.insert(base);
     }
-
     return status;
 }
-PackingStatus FindPacking(const std::vector<Interval> &radii, const BaseType &packing_radius, const std::string &storage_file) {
-    QueueType disk_queue(LessNormCompare);
-    std::list<Disk> packing;
-    std::vector<int> frequency_table(radii.size(), 0);
+PackingStatus PackingGenerator::FindPacking(const std::string &storage_file) {
     packing.emplace_back(zero, zero, radii[0], 0);
     disk_queue.insert(&packing.back());
     ++frequency_table[0];
-    auto status = AddAnotherDisk(radii, packing, frequency_table, packing_radius, disk_queue);
+    auto status = AddAnotherDisk();
     if(status == PackingStatus::complete) {
         CDP::Packing storage_packing;
         DumpPacking(storage_packing, packing, packing_radius);
         WritePackingToFile(storage_packing, storage_file);        
     }
     return status;
+}
+PackingGenerator::PackingGenerator(const std::vector<Interval> &radii_, const BaseType &packing_radius_):
+radii(radii_), packing_radius{packing_radius_}, packing{}, disk_queue(LessNormCompare), 
+frequency_table(radii_.size(), 0){}
+
+void PackingGenerator::Reset() {
+    disk_queue.clear();
+    packing.clear();
+    for(auto &x : frequency_table) {
+        x = 0;
+    }
 }
