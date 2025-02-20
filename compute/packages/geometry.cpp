@@ -1,6 +1,38 @@
 #include "geometry.h"
 #include "../consts.h"
 
+SpiralSimilarityOperator::SpiralSimilarityOperator(const Interval &x_, const Interval &y_): x{x_}, y{y_} {}
+SpiralSimilarityOperator::SpiralSimilarityOperator(const SpiralSimilarityOperator &other): x{other.x}, y{other.y} {}
+SpiralSimilarityOperator::SpiralSimilarityOperator(SpiralSimilarityOperator &&other): x{std::move(other.x)}, y{std::move(other.y)} {}
+
+SpiralSimilarityOperator::SpiralSimilarityOperator(const Interval &base_radius, const Interval &previous_radius,  const Interval &next_radius) {
+auto    a2 = square(base_radius + previous_radius),
+        b2 = square(base_radius + next_radius),
+        c2 = square(previous_radius + next_radius);
+        x = ((b2 - c2)/a2 + one)/2.0L,
+        y = sqrt(b2/a2 - square(x));
+}
+
+IntervalPair SpiralSimilarityOperator::operator*(const IntervalPair &vec) const noexcept {
+    return IntervalPair{vec.first * x - vec.second * y, vec.second * x + vec.first * y};
+}
+SpiralSimilarityOperator SpiralSimilarityOperator::operator*(const SpiralSimilarityOperator &other) const noexcept{
+    return SpiralSimilarityOperator{other.x * x - other.y * y, other.y * x + other.x * y};
+}
+
+SpiralSimilarityOperator& SpiralSimilarityOperator::operator=(const SpiralSimilarityOperator &other) {
+    x = other.x;
+    y = other.y;
+    return *this;
+}
+SpiralSimilarityOperator& SpiralSimilarityOperator::operator=(SpiralSimilarityOperator &&other) {
+    x = std::move(other.x);
+    y = std::move(other.y);
+    return *this;
+}
+SpiralSimilarityOperator::SpiralSimilarityOperator(): SpiralSimilarityOperator{1, 0} {}
+
+
 std::ostream& operator<<(std::ostream& out, const Interval& x) {
     return out << x.lower() << " " << x.upper();
 }
@@ -38,6 +70,8 @@ bool Disk::tangent(const Disk &other) const {
 bool Disk::disjoint(const Disk &other) const {
     return  cergt(gap_between_disks(*this, other), 0.0L);
 }
+
+
 
 bool LessNormCompare(const Disk *a, const Disk *b) {
     return median(sqrt(a->get_norm()) + a->get_radius()) < median(sqrt(b->get_norm()) + b->get_radius());

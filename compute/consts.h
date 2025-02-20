@@ -1,10 +1,5 @@
 #include "packages/geometry.h"
 
-const BaseType epsilon = .00000000001;
-// const BaseType delta = .00001;
-
-const Interval  one  {1 - epsilon, 1 + epsilon}, 
-                zero{-epsilon, epsilon};
 // const Angle starting_angle{ Interval{std::sqrt(1 - delta * delta), 1}, Interval{-delta, delta}};
 const std::vector<Interval> c{
                             Interval{0.637555977, 0.637555978},

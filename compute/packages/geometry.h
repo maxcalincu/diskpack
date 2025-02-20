@@ -7,6 +7,31 @@ using namespace boost::numeric;
 typedef long double BaseType;
 
 typedef interval<BaseType, interval_lib::policies<interval_lib::save_state<interval_lib::rounded_transc_exact<BaseType> >, interval_lib::checking_base<BaseType> > > Interval;
+typedef std::pair<Interval, Interval> IntervalPair;
+
+const BaseType epsilon = .00000000001;
+
+const Interval  one  {1 - epsilon, 1 + epsilon}, 
+                zero{-epsilon, epsilon};
+
+struct SpiralSimilarityOperator {
+    Interval x;
+    Interval y;
+
+    SpiralSimilarityOperator(const Interval &x_, const Interval &y_);
+    SpiralSimilarityOperator(const SpiralSimilarityOperator &other);
+    SpiralSimilarityOperator(SpiralSimilarityOperator &&other);
+
+    SpiralSimilarityOperator& operator=(const SpiralSimilarityOperator &other);
+    SpiralSimilarityOperator& operator=(SpiralSimilarityOperator &&other);
+
+    SpiralSimilarityOperator(const Interval &base_radius, const Interval &previous_radius,  const Interval &next_radius);
+
+    IntervalPair operator*(const IntervalPair &vec) const noexcept;
+    SpiralSimilarityOperator operator*(const SpiralSimilarityOperator &other) const noexcept;
+    SpiralSimilarityOperator();
+};
+
 
 std::ostream& operator<<(std::ostream& out, const Interval& x);
 

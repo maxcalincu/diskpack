@@ -26,6 +26,26 @@ void WritePackingToFile(CDP::Packing &packing, const std::string &filename){
         }
 }
 
+
+inline size_t OperatorLookUpTable::GetIndex(size_t i, size_t j, size_t k) {
+    return i + j * radii.size() + k * radii.size() * radii.size();
+}
+SpiralSimilarityOperator* OperatorLookUpTable::operator()(size_t base_type, size_t prev_type, size_t next_type) {
+    auto index = GetIndex(base_type, prev_type, next_type);
+    if(!presence[index]) {
+        values[index] = SpiralSimilarityOperator{radii[base_type], radii[prev_type], radii[next_type]};
+        presence[index] = true;
+    }
+    return &values[index];
+}
+OperatorLookUpTable::OperatorLookUpTable(const std::vector<Interval> &radii_): radii(radii_), identity(),
+values(radii_.size() * radii_.size() * radii_.size()), presence(radii_.size() * radii_.size() * radii_.size()) {};
+
+SpiralSimilarityOperator* OperatorLookUpTable::operator()() {
+    return &identity;
+}
+
+
 inline bool PackingGenerator::HasIntersection(const Disk &new_disk) {
     for(auto &disk : packing) {
         if(new_disk.intersects(disk)) {
@@ -35,49 +55,56 @@ inline bool PackingGenerator::HasIntersection(const Disk &new_disk) {
     return false;
 }
 
-inline std::pair<Interval, Interval> GetNextCenter(const Interval &x_prime, const Interval &y_prime, const Interval &base_radius, const Interval &previous_radius,  const Interval &next_radius) {
-    auto a2 = square(base_radius + previous_radius),
-         b2 = square(base_radius + next_radius),
-         c2 = square(previous_radius + next_radius);
-    
-    auto p = ((b2 - c2)/a2 + one)/2.0L,
-         q = sqrt(b2/a2 - square(p));
-        //  std::cout << std::setprecision(15) << p << " " << q << "\n";
-
-        // x_1 = p * x_prime + q * y_prime,
-        // auto x_2 = p * x_prime - q * y_prime;
-        // y_1 = p * y_prime - q * x_prime,
-        // auto y_2 = p * y_prime + q * x_prime;
-
-        // std::cout << std::setprecision(15) << q << " " << q << " p q\n";
-        // std::cout << std::setprecision(15) << x_2 << " " << y_2 << "\n";
-        // std::cout << std::setprecision(15) << x_prime << " " << y_prime << " huh\n";
-    return std::make_pair(p * x_prime - q * y_prime, p * y_prime + q * x_prime);
+SpiralSimilarityOperator GetOperatorsProduct(const size_t &begin, const size_t &end, const std::vector<SpiralSimilarityOperator*> &operators) {
+    switch (end - begin) {
+        case 0:
+            return SpiralSimilarityOperator();
+        case 1:
+            return *operators[begin];
+        case 2:
+            return *operators[begin] * *operators[begin + 1];
+        case 3:
+            return *operators[begin] * (*operators[begin + 1] * *operators[begin + 2]);
+        case 4:
+            return (*operators[begin] * *operators[begin + 1]) * (*operators[begin + 2] * *operators[begin + 3]);
+        default:
+            auto mid = (begin + end)/2;
+            return GetOperatorsProduct(begin, mid, operators) * GetOperatorsProduct(mid, end, operators); 
+    }
+    throw "Never happens";
 }
 
-PackingStatus PackingGenerator::GapFill(const Disk &base, std::vector<Disk*> &corona, const std::pair<Interval, Interval> &previous_leaf) {
+
+PackingStatus PackingGenerator::GapFill(const Disk &base, std::vector<Disk*> &corona, std::vector<SpiralSimilarityOperator*> &operators, IntervalPair &starting_leaf) {
     // std::cout << "gapfill\n";
-    assert(radii.size() == frequency_table.size());
 
     std::vector<size_t> shuffle(radii.size());
     for(size_t i = 0; i < radii.size(); ++i) {
         shuffle[i] = i;
     }
     std::shuffle(shuffle.begin(), shuffle.end(), g);
-    if(corona.size() > 2) {
+    if (corona.size() > 2) {
+
         if(corona.back()->intersects(*corona.front())) {
             return PackingStatus::invalid;
         }
+
         if(corona.back()->tangent(*corona.front())) {
             return AddAnotherDisk();
         }
     }
     for(size_t i = 0; i < radii.size(); ++i) {
-        auto center = corona.empty() ? std::make_pair(base.get_radius() + radii[shuffle[i]], 0.0L) : 
-        GetNextCenter(previous_leaf.first, previous_leaf.second, base.get_radius(), corona.back()->get_radius(), radii[shuffle[i]]); 
-
-        Disk new_disk(center.first + base.get_center_x(), center.second + base.get_center_y(), radii[shuffle[i]], shuffle[i]);
+        
+        operators.push_back(corona.empty() ? lut() : lut(base.get_type(), corona.back()->get_type(), shuffle[i]));
+        
+        starting_leaf = (corona.empty() ? IntervalPair{base.get_radius() + radii[shuffle[i]], 0.0L} : starting_leaf); 
+        
+        auto new_disk_center = GetOperatorsProduct(0, operators.size(), operators) * starting_leaf;
+        
+        Disk new_disk(new_disk_center.first + base.get_center_x(), new_disk_center.second + base.get_center_y(), radii[shuffle[i]], shuffle[i]);
+       
         if(HasIntersection(new_disk)) {
+            operators.pop_back();
             continue;
         }
         packing.push_back(std::move(new_disk));
@@ -86,14 +113,14 @@ PackingStatus PackingGenerator::GapFill(const Disk &base, std::vector<Disk*> &co
         ++frequency_table[shuffle[i]];
 
         // packing.emplace_back(base.get_center_x(), base.get_center_y(), Interval{0.2}, 4);
-
-        auto status = GapFill(base, corona, center);
+        auto status = GapFill(base, corona, operators, starting_leaf);
         if(status == PackingStatus::complete) {
             return PackingStatus::complete;
         }
         // packing.pop_back();
         
         assert(corona.back() == &packing.back());
+        operators.pop_back();
         corona.pop_back();
         disk_queue.erase(&packing.back());
         --frequency_table[shuffle[i]];
@@ -163,6 +190,7 @@ PackingStatus PackingGenerator::AddAnotherDisk() {
         return (std::find(frequency_table.begin(), frequency_table.end(), 0) != frequency_table.end() ? PackingStatus::invalid : PackingStatus::complete); 
     }
 
+    std::vector<SpiralSimilarityOperator*> operators(0);
     std::vector<Disk*> corona(0);
     GetSortedCorona(*base, corona);
     for(size_t i = 0; i + 1< corona.size(); ++i) {
@@ -173,17 +201,18 @@ PackingStatus PackingGenerator::AddAnotherDisk() {
         }
         // assert(corona[i]->tangent(*corona[i + 1]));
     }
-    auto previous_leaf = (corona.empty() ?  std::make_pair(0.0L, 0.0L) : 
+    auto starting_leaf = (corona.empty() ?  std::make_pair(0.0L, 0.0L) : 
                                             std::make_pair( corona.back()->get_center_x() - median(base->get_center_x()),
                                                             corona.back()->get_center_y() - median(base->get_center_y())));
     
-    auto status = GapFill(*base, corona, previous_leaf);;
+    auto status = GapFill(*base, corona, operators, starting_leaf);
     if(status == PackingStatus::invalid) {
         disk_queue.insert(base);
     }
     return status;
 }
 PackingStatus PackingGenerator::FindPacking(const std::string &storage_file) {
+    Reset();
     packing.emplace_back(zero, zero, radii[0], 0);
     disk_queue.insert(&packing.back());
     ++frequency_table[0];
@@ -197,7 +226,7 @@ PackingStatus PackingGenerator::FindPacking(const std::string &storage_file) {
 }
 PackingGenerator::PackingGenerator(const std::vector<Interval> &radii_, const BaseType &packing_radius_):
 radii(radii_), packing_radius{packing_radius_}, packing{}, disk_queue(LessNormCompare), 
-frequency_table(radii_.size(), 0){}
+frequency_table(radii_.size(), 0), lut(radii_){};
 
 void PackingGenerator::Reset() {
     disk_queue.clear();
