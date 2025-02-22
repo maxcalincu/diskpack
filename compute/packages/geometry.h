@@ -25,7 +25,8 @@ struct SpiralSimilarityOperator {
     SpiralSimilarityOperator& operator=(const SpiralSimilarityOperator &other);
     SpiralSimilarityOperator& operator=(SpiralSimilarityOperator &&other);
 
-    SpiralSimilarityOperator(const Interval &base_radius, const Interval &previous_radius,  const Interval &next_radius);
+    SpiralSimilarityOperator(   const Interval &base_r, const Interval &prev_r,  const Interval &next_r,
+                                const size_t &base_t, const size_t &prev_t, const size_t &next_t);
 
     IntervalPair operator*(const IntervalPair &vec) const noexcept;
     SpiralSimilarityOperator operator*(const SpiralSimilarityOperator &other) const noexcept;

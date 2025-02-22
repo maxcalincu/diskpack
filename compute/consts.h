@@ -1,5 +1,5 @@
 #include "packages/geometry.h"
-
+#pragma once
 // const Angle starting_angle{ Interval{std::sqrt(1 - delta * delta), 1}, Interval{-delta, delta}};
 const std::vector<Interval> c{
                             Interval{0.637555977, 0.637555978},
