@@ -20,8 +20,8 @@ int main(int argc, char *argv[]) {
   std::sscanf(argv[2], "%Lf", &packing_radius);
   std::vector<size_t> coronal_code(0);
   std::vector<Interval> radii{one}; //, d[i].first, d[i].second};
-  // radii.push_back(c[i]);
-  // radii.push_back(d[i].first); radii.push_back(d[i].second);
+//   radii.push_back(c[i]);
+  radii.push_back(d[i].first); radii.push_back(d[i].second);
 
   storage_file = std::string{"../storage/"} + char('0') + std::string{".txt"};
 
@@ -34,8 +34,6 @@ int main(int argc, char *argv[]) {
     status = generator.FindPacking(storage_file);
   }
   auto t2 = high_resolution_clock::now();
-
-  // generator.Reset();
 
   auto ms_int = duration_cast<milliseconds>(t2 - t1);
   std::cout << ms_int.count() / n << "ms\n";

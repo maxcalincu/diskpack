@@ -1,6 +1,7 @@
 #include "tools.h"
 #include "cw.pb.h"
 #include "geometry.h"
+#include <algorithm>
 #include <boost/numeric/interval/utility_fwd.hpp>
 
 std::random_device rd;
@@ -51,12 +52,16 @@ SpiralSimilarityOperator *OperatorLookUpTable::operator()() {
 }
 
 inline bool PackingGenerator::HasIntersection(const Disk &new_disk) {
-  for (auto &disk : packing) {
-    if (new_disk.intersects(disk)) {
-      return true;
-    }
-  }
-  return false;
+  
+    return std::any_of(packing.begin(), packing.end(), [&new_disk](const Disk &disk) {
+        return new_disk.intersects(disk);
+    });
+//   for (auto &disk : packing) {
+//     if (new_disk.intersects(disk)) {
+//       return true;
+//     }
+//   }
+//   return false;
 }
 
 SpiralSimilarityOperator
@@ -89,9 +94,7 @@ PackingGenerator::GapFill(const Disk &base, std::vector<Disk *> &corona,
   // std::cout << "gapfill\n";
 
   std::vector<size_t> shuffle(radii.size());
-  for (size_t i = 0; i < radii.size(); ++i) {
-    shuffle[i] = i;
-  }
+  std::iota(shuffle.begin(), shuffle.end(), 0);
   std::shuffle(shuffle.begin(), shuffle.end(), g);
   if (corona.size() > 2) {
     if (corona.back()->intersects(*corona.front())) {
@@ -130,14 +133,11 @@ PackingGenerator::GapFill(const Disk &base, std::vector<Disk *> &corona,
     disk_queue.insert(&packing.back());
     ++frequency_table[shuffle[i]];
 
-    // packing.emplace_back(base.get_center_x(), base.get_center_y(),
-    // Interval{0.2}, 4);
     auto status = GapFill(base, corona, operators, starting_leaf);
     if (status == PackingStatus::complete) {
       return PackingStatus::complete;
     }
-    // packing.pop_back();
-
+    
     assert(corona.back() == &packing.back());
     operators.pop_back();
     corona.pop_back();
@@ -145,17 +145,14 @@ PackingGenerator::GapFill(const Disk &base, std::vector<Disk *> &corona,
     --frequency_table[shuffle[i]];
     packing.pop_back();
   }
-  // std::cout << "invalid end of list\n";
   return PackingStatus::invalid;
 }
 
 inline bool PackingGenerator::IsInBounds(const Disk *disk) {
-  if (disk == nullptr) {
-    return false;
-  }
-  return cerle(disk->get_norm(), packing_radius * packing_radius);
-  // return std::max(std::abs(d->get_center_x()), std::abs(d->get_center_y())) <
-  // packing_radius;
+  return disk == nullptr
+            ? false
+            : cerle(disk->get_norm(), 
+                    (packing_radius - disk->get_radius()) * (packing_radius - disk->get_radius()));
 }
 
 struct DiskClockwiseCompare {
@@ -202,7 +199,6 @@ inline void PackingGenerator::GetSortedCorona(const Disk &base,
 }
 
 PackingStatus PackingGenerator::AddAnotherDisk() {
-  // std::cout << "add\n";
   Disk *base = nullptr;
   while (!IsInBounds(base) && !disk_queue.empty()) {
     base = *(disk_queue.begin());

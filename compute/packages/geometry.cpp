@@ -13,14 +13,9 @@ SpiralSimilarityOperator::SpiralSimilarityOperator(
 SpiralSimilarityOperator::SpiralSimilarityOperator(
     const Interval &base_r, const Interval &prev_r, const Interval &next_r,
     const size_t &base_t, const size_t &prev_t, const size_t &next_t) {
-  // a2 = square(base_r + prev_r),
-  // b2 = square(base_r + next_r),
-  // c2 = square(prev_r + next_r),
+
   const auto &b_r = base_r, &p_r = prev_r, &n_r = next_r;
-
   const auto &b_t = base_t, &p_t = prev_t, &n_t = next_t;
-
-  // x = ((b2 - c2)/a2 + one)/2.0L, square(p + q)/square(p + r)
 
   x = (p_t == b_t
            ? one / 2.0L
@@ -30,19 +25,13 @@ SpiralSimilarityOperator::SpiralSimilarityOperator(
                                 : one / (one + p_r / b_r) +
                                       n_r * (one - p_r / b_r) /
                                           (b_r * square(one + p_r / b_r)))));
-  // x = p/(p + r) + q * (p - r) / square(p + r);
-  // x = ((square(p + q) - square(r + q))/square(p + r) + one)/2.0L;
 
-  /*
-  (x^2 - y^2 + 2zx - 2zy)/2(x + y)^2 + 1
-  (x - y)/2(x + y) + z(x - y)/(x + y)^2 + 1
+// x = ((square(n_r + p_r) - square(n_r + p_r))/square(n_r + b_r) + one)/2.0L;
 
+//   (p^2 + np - nb + pb) / (p + b)^2
+//   p_r/(p_r + b_r) + n_r(p_r - b_r)/(p_r + b_r)^2
 
-  (x^2 + zx - zy + xy) / (x + y)^2
-  x/(x + y) + z(x - y)/(x + y)^2
-  */
-
-  // y = 2.0L * sqrt(p * q * r * (p + r + q))/square(p + r);
+  // y = 2.0L * sqrt(n_r * b_r * p_r * (n_r + b_r + p_r))/square(b_r + n_r);
   auto t = n_r / (b_r + p_r);
   y = (b_t == p_t && n_t == p_t
            ? one * std::sqrt(3.0L) / 2.0L
@@ -119,14 +108,3 @@ bool LessNormCompare(const Disk *a, const Disk *b) {
   return median(sqrt(a->get_norm()) + a->get_radius()) <
          median(sqrt(b->get_norm()) + b->get_radius());
 }
-
-/*
-
-x^2 + y^2 = (r1 + r)^2
-x2^2 + y2^2 = (r1 + r2)^2
-(x2 - x)^2 + (y2 - y)^2 = (r2 + r)^2
-
-
-x2x + y2y = r1 ^ 2 + r1r + r1r2 - r2r = a
-
-*/
