@@ -1,6 +1,7 @@
 #include "consts.h"
 #include "packages/geometry.h"
 #include "packages/tools.h"
+#include "packages/generator.h"
 #include <bits/stdc++.h>
 
 using std::chrono::duration_cast;
@@ -15,13 +16,15 @@ int main(int argc, char *argv[]) {
   }
 
   int i;
-  BaseType packing_radius;
+  BaseType packing_radius, lower, upper;
   std::sscanf(argv[1], "%d", &i);
   std::sscanf(argv[2], "%Lf", &packing_radius);
+  std::sscanf(argv[3], "%Lf", &lower);
+  std::sscanf(argv[4], "%Lf", &upper);
   std::vector<size_t> coronal_code(0);
   std::vector<Interval> radii{one}; //, d[i].first, d[i].second};
-//   radii.push_back(c[i]);
-  radii.push_back(d[i].first); radii.push_back(d[i].second);
+  radii.push_back(c[i] + Interval{lower, upper});
+  // radii.push_back(d[i].first); radii.push_back(d[i].second);
 
   storage_file = std::string{"../storage/"} + char('0') + std::string{".txt"};
 
@@ -31,15 +34,20 @@ int main(int argc, char *argv[]) {
   PackingStatus status;
   auto t1 = high_resolution_clock::now();
   for (int i = 0; i < n; ++i) {
-    status = generator.FindPacking(storage_file);
+    status = generator.FindPacking();
   }
+  // std::cout << sizeof(Disk) << " " << sizeof(SpiralSimilarityOperator) << " "
+  // <<  sizeof(Interval) << " " << sizeof(Disk*) << "\n";
   auto t2 = high_resolution_clock::now();
 
   auto ms_int = duration_cast<milliseconds>(t2 - t1);
   std::cout << ms_int.count() / n << "ms\n";
-  if (status == PackingStatus::complete)
+
+  
+  if (status == PackingStatus::complete) {
+    generator.Dump(storage_file);
     std::cout << "complete\n";
-  else
+  } else
     std::cout << "invalid\n";
 
   return 0;

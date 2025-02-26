@@ -5,3 +5,5 @@ visualize/images
 visualie/notebook.ipynb
 draft.txt
 .vscode
+visualize/packages/__pycache__
+compute/main.cpp

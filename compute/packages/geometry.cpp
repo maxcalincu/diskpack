@@ -26,10 +26,10 @@ SpiralSimilarityOperator::SpiralSimilarityOperator(
                                       n_r * (one - p_r / b_r) /
                                           (b_r * square(one + p_r / b_r)))));
 
-// x = ((square(n_r + p_r) - square(n_r + p_r))/square(n_r + b_r) + one)/2.0L;
+  // x = ((square(n_r + p_r) - square(n_r + p_r))/square(n_r + b_r) + one)/2.0L;
 
-//   (p^2 + np - nb + pb) / (p + b)^2
-//   p_r/(p_r + b_r) + n_r(p_r - b_r)/(p_r + b_r)^2
+  //   (p^2 + np - nb + pb) / (p + b)^2
+  //   p_r/(p_r + b_r) + n_r(p_r - b_r)/(p_r + b_r)^2
 
   // y = 2.0L * sqrt(n_r * b_r * p_r * (n_r + b_r + p_r))/square(b_r + n_r);
   auto t = n_r / (b_r + p_r);
@@ -87,6 +87,9 @@ Interval Disk::get_radius() const { return radius; }
 Interval Disk::get_center_x() const { return center_x; }
 Interval Disk::get_center_y() const { return center_y; }
 size_t Disk::get_type() const { return disk_type; }
+BaseType Disk::precision() const {
+  return std::min(width(center_x), width(center_y));
+}
 
 inline Interval gap_between_disks(const Disk &a, const Disk &b) {
   return sqrt(square(a.get_center_x() - b.get_center_x()) +
