@@ -1,3 +1,4 @@
+#include "corona.h"
 #include "geometry.h"
 #include "tools.h"
 #include <algorithm>
@@ -11,19 +12,18 @@ class PackingGenerator {
   const BaseType packing_radius;
   std::list<Disk> packing;
   QueueType disk_queue;
-  OperatorLookUpTable lut;
+  OperatorLookupTable lookup_table;
 
   std::vector<int> frequency_table;
 
-  PackingStatus
-  GapFill(const Disk &base, std::deque<Disk *> &corona,
-          std::vector<SpiralSimilarityOperator *> &operators_front,
-          IntervalPair &leaf_front,
-          std::vector<SpiralSimilarityOperator *> &operators_back,
-          IntervalPair &leaf_back);
+  PackingStatus GapFill(Corona &corona);
   PackingStatus AdvancePacking();
-  inline void GetSortedCorona(const Disk &base, std::deque<Disk *> &corona);
-  bool IsCoronaContinuous(const Disk *base, const std::deque<Disk *> &corona);
+
+  void Push(Disk &&new_disk, size_t index, Corona &corona);
+  void Pop(size_t index, Corona &corona);
+
+  void Push(Disk &&new_disk, size_t index);
+  void Pop(size_t index);
 
 public:
   PackingGenerator(const std::vector<Interval> &radii_,

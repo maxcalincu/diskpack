@@ -50,8 +50,11 @@ class Disk {
 public:
   Disk(Interval center_x_, Interval center_y_, Interval radius_,
        size_t disk_type_);
+  Disk();
   Disk(const Disk &other) noexcept;
-  Disk(const Disk &&other) noexcept;
+  Disk(Disk &&other) noexcept;
+  Disk &operator=(const Disk &other);
+  Disk &operator=(Disk &&other);
 
   Interval get_norm() const;
   Interval get_radius() const;

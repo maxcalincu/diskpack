@@ -2,23 +2,23 @@
 #include "geometry.h"
 #pragma once
 
-enum PackingStatus { complete, invalid };
+enum PackingStatus { complete, invalid, precision_error, corona_error };
 
 typedef std::multiset<Disk *, decltype(&LessNormCompare)> QueueType;
 typedef std::vector<const SpiralSimilarityOperator *> OperatorCollection;
 
-class OperatorLookUpTable {
+class OperatorLookupTable {
   std::vector<SpiralSimilarityOperator> values;
   std::vector<bool> presence;
   SpiralSimilarityOperator identity;
-  const std::vector<Interval> &radii;
   inline size_t GetIndex(size_t i, size_t j, size_t k);
 
 public:
+  const std::vector<Interval> &radii;
   SpiralSimilarityOperator *operator()(size_t base_type, size_t prev_type,
                                        size_t next_type);
   SpiralSimilarityOperator *operator()();
-  OperatorLookUpTable(const std::vector<Interval> &radii_);
+  OperatorLookupTable(const std::vector<Interval> &radii_);
 };
 
 struct DiskClockwiseCompare {

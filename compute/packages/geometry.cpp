@@ -78,9 +78,26 @@ Disk::Disk(const Disk &other) noexcept
     : center_x{other.center_x}, center_y{other.center_y}, radius{other.radius},
       disk_type{other.disk_type} {};
 
-Disk::Disk(const Disk &&other) noexcept
+Disk::Disk(Disk &&other) noexcept
     : center_x{std::move(other.center_x)}, center_y{std::move(other.center_y)},
       radius{std::move(other.radius)}, disk_type{std::move(other.disk_type)} {};
+
+Disk &Disk::operator=(const Disk &other) {
+  center_x = other.center_x;
+  center_y = other.center_y;
+  radius = other.radius;
+  disk_type = other.disk_type;
+  return *this;
+}
+Disk &Disk::operator=(Disk &&other) {
+  center_x = std::move(other.center_x);
+  center_y = std::move(other.center_y);
+  radius = std::move(other.radius);
+  disk_type = other.disk_type;
+  return *this;
+}
+
+Disk::Disk() : center_x(0, 0), center_y(0, 0), radius(0, 0), disk_type(0) {};
 
 Interval Disk::get_norm() const { return square(center_x) + square(center_y); }
 Interval Disk::get_radius() const { return radius; }

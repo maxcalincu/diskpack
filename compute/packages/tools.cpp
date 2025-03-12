@@ -40,11 +40,11 @@ void WritePackingToFile(CDP::Packing &packing, const std::string &filename) {
   }
 }
 
-inline size_t OperatorLookUpTable::GetIndex(size_t i, size_t j, size_t k) {
+inline size_t OperatorLookupTable::GetIndex(size_t i, size_t j, size_t k) {
   return i + j * radii.size() + k * radii.size() * radii.size();
 }
 SpiralSimilarityOperator *
-OperatorLookUpTable::operator()(size_t base_t, size_t prev_t, size_t next_t) {
+OperatorLookupTable::operator()(size_t base_t, size_t prev_t, size_t next_t) {
   auto index = GetIndex(base_t, prev_t, next_t);
   if (!presence[index]) {
     values[index] = SpiralSimilarityOperator{
@@ -53,11 +53,11 @@ OperatorLookUpTable::operator()(size_t base_t, size_t prev_t, size_t next_t) {
   }
   return &values[index];
 }
-OperatorLookUpTable::OperatorLookUpTable(const std::vector<Interval> &radii_)
+OperatorLookupTable::OperatorLookupTable(const std::vector<Interval> &radii_)
     : radii(radii_), identity(),
       values(radii_.size() * radii_.size() * radii_.size()),
       presence(radii_.size() * radii_.size() * radii_.size()) {};
 
-SpiralSimilarityOperator *OperatorLookUpTable::operator()() {
+SpiralSimilarityOperator *OperatorLookupTable::operator()() {
   return &identity;
 }
