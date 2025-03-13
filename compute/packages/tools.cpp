@@ -1,4 +1,6 @@
 #include "tools.h"
+#include <functional>
+
 
 DiskClockwiseCompare::DiskClockwiseCompare(const Disk &base) {
   center_x = base.get_center_x();
@@ -43,21 +45,20 @@ void WritePackingToFile(CDP::Packing &packing, const std::string &filename) {
 inline size_t OperatorLookupTable::GetIndex(size_t i, size_t j, size_t k) {
   return i + j * radii.size() + k * radii.size() * radii.size();
 }
-SpiralSimilarityOperator *
-OperatorLookupTable::operator()(size_t base_t, size_t prev_t, size_t next_t) {
+SSORef OperatorLookupTable::operator()(size_t base_t, size_t prev_t, size_t next_t) {
   auto index = GetIndex(base_t, prev_t, next_t);
   if (!presence[index]) {
     values[index] = SpiralSimilarityOperator{
         radii[base_t], radii[prev_t], radii[next_t], base_t, prev_t, next_t};
     presence[index] = true;
   }
-  return &values[index];
+  return std::ref(values[index]);
 }
 OperatorLookupTable::OperatorLookupTable(const std::vector<Interval> &radii_)
     : radii(radii_), identity(),
       values(radii_.size() * radii_.size() * radii_.size()),
       presence(radii_.size() * radii_.size() * radii_.size()) {};
 
-SpiralSimilarityOperator *OperatorLookupTable::operator()() {
-  return &identity;
+SSORef OperatorLookupTable::operator()() {
+  return std::ref(identity);
 }

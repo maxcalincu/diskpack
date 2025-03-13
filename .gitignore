@@ -2,7 +2,6 @@ consts/
 build/
 storage/
 visualize/images
-visualie/notebook.ipynb
 draft.txt
 .vscode
 visualize/packages/__pycache__

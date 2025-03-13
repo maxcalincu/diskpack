@@ -2,10 +2,13 @@
 #include "geometry.h"
 #pragma once
 
+
 enum PackingStatus { complete, invalid, precision_error, corona_error };
 
-typedef std::multiset<Disk *, decltype(&LessNormCompare)> QueueType;
-typedef std::vector<const SpiralSimilarityOperator *> OperatorCollection;
+
+using QueueType = std::multiset<Disk *, decltype(&LessNormCompare)>;
+using SSORef = std::reference_wrapper<SpiralSimilarityOperator>;
+
 
 class OperatorLookupTable {
   std::vector<SpiralSimilarityOperator> values;
@@ -15,9 +18,9 @@ class OperatorLookupTable {
 
 public:
   const std::vector<Interval> &radii;
-  SpiralSimilarityOperator *operator()(size_t base_type, size_t prev_type,
+  SSORef operator()(size_t base_type, size_t prev_type,
                                        size_t next_type);
-  SpiralSimilarityOperator *operator()();
+  SSORef operator()();
   OperatorLookupTable(const std::vector<Interval> &radii_);
 };
 

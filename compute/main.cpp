@@ -19,17 +19,19 @@ int main(int argc, char *argv[]) {
   BaseType packing_radius, lower, upper;
   std::sscanf(argv[1], "%d", &i);
   std::sscanf(argv[2], "%Lf", &packing_radius);
-  // std::sscanf(argv[3], "%Lf", &lower);
-  // std::sscanf(argv[4], "%Lf", &upper);
+  std::sscanf(argv[3], "%Lf", &lower);
+  std::sscanf(argv[4], "%Lf", &upper);
   std::vector<size_t> coronal_code(0);
-  std::vector<Interval> radii{one, c[i]}; //, d[i].first, d[i].second};
-  // radii.push_back(c[i] + Interval{lower, upper);
+  std::vector<Interval> radii{one};
+  // std::vector<Interval> radii{one, three_radii[i].first, three_radii[i].second};
+  // std::vector<Interval> radii{one, two_radii[i]};
+  radii.push_back(two_radii[i] + Interval{lower, upper});
   // radii.push_back(d[i].first); radii.push_back(d[i].second);
   // radii = proposed1;
 
   storage_file = std::string{"../storage/"} + char('0') + std::string{".txt"};
-
-  PackingGenerator generator{radii, packing_radius};
+  BaseType precision_threshold = 0.5;
+  PackingGenerator generator{radii, packing_radius, precision_threshold};
 
   int n = 1;
   PackingStatus status;

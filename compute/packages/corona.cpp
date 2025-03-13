@@ -2,19 +2,19 @@
 
 SpiralSimilarityOperator Corona::GetOperatorsProduct(
     const size_t &begin, const size_t &end,
-    const std::vector<SpiralSimilarityOperator *> &operators) const {
+    const std::vector<SSORef> &operators) const {
   switch (end - begin) {
   case 0:
     return SpiralSimilarityOperator();
   case 1:
-    return *operators[begin];
+    return operators[begin];
   case 2:
-    return *operators[begin] * *operators[begin + 1];
+    return operators[begin].get() * operators[begin + 1].get();
   case 3:
-    return *operators[begin] * (*operators[begin + 1] * *operators[begin + 2]);
+    return operators[begin].get() * (operators[begin + 1].get() * operators[begin + 2].get());
   case 4:
-    return (*operators[begin] * *operators[begin + 1]) *
-           (*operators[begin + 2] * *operators[begin + 3]);
+    return (operators[begin].get()     *  operators[begin + 1].get()) *
+           (operators[begin + 2].get() *  operators[begin + 3].get());
   }
   auto mid = (begin + end) / 2;
   return GetOperatorsProduct(begin, mid, operators) *
@@ -28,6 +28,7 @@ bool Corona::IsCompleted() const {
           (corona.front()->get_center_y() - base.get_center_y()) -
       (corona.front()->get_center_x() - base.get_center_x()) *
           (corona.back()->get_center_y() - base.get_center_y());
+          
   return (corona.size() > 2 && corona.back()->tangent(*corona.front()) &&
           cergt(cross_product, 0.0L));
 }
@@ -59,8 +60,7 @@ bool Corona::IsContinuous() const {
 
 Corona::Corona(const Disk &b, const std::list<Disk> &packing,
                OperatorLookupTable &lookup_table_)
-    : base(b), operators_front(0), operators_back(0), corona(0),
-      lookup_table(lookup_table_) {
+    : base(b), lookup_table(lookup_table_) {
   operators_back.reserve(12);
   operators_front.reserve(12);
 

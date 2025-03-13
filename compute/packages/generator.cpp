@@ -1,6 +1,4 @@
 #include "generator.h"
-#include "geometry.h"
-#include "tools.h"
 
 std::random_device rd;
 std::mt19937 g(rd());
@@ -38,6 +36,11 @@ PackingStatus PackingGenerator::GapFill(Corona &corona) {
 
   for (size_t i = 0; i < radii.size(); ++i) {
     corona.PeekNewDisk(new_disk, shuffle[i]);
+    
+    if (new_disk.precision() > precision_threshold) {
+      return PackingStatus::precision_error;
+    }
+    
     if (HasIntersection(new_disk)) {
       continue;
     }
@@ -110,10 +113,11 @@ PackingStatus PackingGenerator::FindPacking() {
 }
 
 PackingGenerator::PackingGenerator(const std::vector<Interval> &radii_,
-                                   const BaseType &packing_radius_)
+                                   const BaseType &packing_radius_,
+                                   const BaseType &precision_threshold_)
     : radii(radii_), packing_radius{packing_radius_},
       disk_queue(LessNormCompare), frequency_table(radii_.size(), 0),
-      lookup_table(radii_) {};
+      lookup_table(radii_), precision_threshold(precision_threshold_) {};
 
 void PackingGenerator::Reset() {
   disk_queue.clear();

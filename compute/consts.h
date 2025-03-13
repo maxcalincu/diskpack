@@ -1,7 +1,7 @@
 #include "packages/geometry.h"
 #pragma once
 // const Angle starting_angle{ Interval{std::sqrt(1 - delta * delta), 1}, Interval{-delta, delta}};
-const std::vector<Interval> c{
+const std::vector<Interval> two_radii{
                             Interval{0.637555977, 0.637555978},
                             Interval{0.545151042, 0.545151043},
                             Interval{0.533296416, 0.533296417},
@@ -23,7 +23,7 @@ const std::vector<Interval> c{
     Interval{0.09084, 0.09085},
     Interval{0.08620, 0.08621}
 };
-const std::vector<std::pair<Interval, Interval>> d{
+const std::vector<std::pair<Interval, Interval>> three_radii{
 {Interval{0.414213, 0.414215}, Interval{0.154700, 0.154702}},
 {Interval{0.280775, 0.280777}, Interval{0.154700, 0.154702}},
 {Interval{0.545150, 0.545152}, Interval{0.154700, 0.154702}},
