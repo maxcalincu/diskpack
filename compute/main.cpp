@@ -25,7 +25,7 @@ int main(int argc, char *argv[]) {
   std::vector<Interval> radii{one};
   // std::vector<Interval> radii{one, three_radii[i].first, three_radii[i].second};
   // std::vector<Interval> radii{one, two_radii[i]};
-  radii.push_back(two_radii[i] + Interval{lower, upper});
+  radii.push_back(two_radii[i]);
   // radii.push_back(d[i].first); radii.push_back(d[i].second);
   // radii = proposed1;
 

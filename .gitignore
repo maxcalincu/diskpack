@@ -1,7 +1,7 @@
 consts/
 build/
-storage/
-visualize/images
+storage/*
+visualize/images/*
 draft.txt
 .vscode
 visualize/packages/__pycache__

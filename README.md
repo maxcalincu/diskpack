@@ -1,7 +1,10 @@
 Repository to generate compact disk packings
 
 ## Clone and build project
-```
+```bash
+$ sudo apt update
+$ sudo apt upgrade
+$ sudo apt install libboost-all-dev
 $ git clone git@github.com:maxcalincu/diskpackings.git
 $ cd diskpackings
 $ mkdir build && cd build
@@ -10,8 +13,8 @@ $ cmake --build .
 ```
 ## Run packing generator
 From build directory run
-```
-./main <packing-number> <packing-radius>
+```bash
+$ ./main <packing-number> <packing-radius>
 ```
 To modify the behaiviour edit compute/main.cpp (should be straightforward)
 

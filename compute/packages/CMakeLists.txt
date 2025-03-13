@@ -1,21 +1,45 @@
 cmake_minimum_required(VERSION 3.16)
 
-include(FetchContent)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+include(ExternalProject)
 
 set(PROTOBUF_VERSION 3.12.4)
-set(PROTOBUF_URL https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOBUF_VERSION}/protobuf-cpp-${PROTOBUF_VERSION}.tar.gz)
+set(PROTOBUF_INSTALL_DIR ${CMAKE_BINARY_DIR}/_deps/protobuf-install)
 
-FetchContent_Declare(
-  protobuf
-  URL ${PROTOBUF_URL}
+ExternalProject_Add(
+  protobuf_ext
+  URL https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOBUF_VERSION}/protobuf-cpp-${PROTOBUF_VERSION}.tar.gz
+  PREFIX ${CMAKE_BINARY_DIR}/_deps/protobuf
+  CONFIGURE_COMMAND 
+    <SOURCE_DIR>/configure 
+    --prefix=${PROTOBUF_INSTALL_DIR}
+    --enable-shared
+    --disable-static
+  BUILD_COMMAND $(MAKE)
+  INSTALL_COMMAND $(MAKE) install
 )
 
-FetchContent_MakeAvailable(protobuf)
+add_library(libprotobuf SHARED IMPORTED)
+add_dependencies(libprotobuf protobuf_ext)
 
-add_library(packages SHARED tools.cpp geometry.cpp cw.pb.cc generator.cpp corona.cpp)
+file(MAKE_DIRECTORY ${PROTOBUF_INSTALL_DIR}/include)  # Create dirs upfront
+set_target_properties(libprotobuf PROPERTIES
+  IMPORTED_LOCATION ${PROTOBUF_INSTALL_DIR}/lib/libprotobuf.so
+  INTERFACE_INCLUDE_DIRECTORIES ${PROTOBUF_INSTALL_DIR}/include
+)
 
-target_link_libraries(packages protobuf)
+add_library(packages SHARED
+  tools.cpp
+  geometry.cpp
+  cw.pb.cc
+  generator.cpp
+  corona.cpp
+)
 
-target_include_directories( packages
-                            INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}
-                            )
+target_link_libraries(packages PRIVATE libprotobuf)
+target_include_directories(packages PUBLIC
+  ${PROTOBUF_INSTALL_DIR}/include
+  ${CMAKE_CURRENT_SOURCE_DIR}
+)
