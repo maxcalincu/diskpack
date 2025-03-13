@@ -11,7 +11,7 @@ std::string storage_file = "../storage/1.txt";
 
 int main(int argc, char *argv[]) {
   if (argc < 3) {
-    std::cerr << "Usage:  " << argv[0] << " storage_file" << std::endl;
+    std::cerr << "Usage:  " << argv[0] << " <packing-number> <packing-radius>" << std::endl;
     return -1;
   }
 
@@ -19,8 +19,8 @@ int main(int argc, char *argv[]) {
   BaseType packing_radius, lower, upper;
   std::sscanf(argv[1], "%d", &i);
   std::sscanf(argv[2], "%Lf", &packing_radius);
-  std::sscanf(argv[3], "%Lf", &lower);
-  std::sscanf(argv[4], "%Lf", &upper);
+  // std::sscanf(argv[3], "%Lf", &lower);
+  // std::sscanf(argv[4], "%Lf", &upper);
   std::vector<size_t> coronal_code(0);
   std::vector<Interval> radii{one};
   // std::vector<Interval> radii{one, three_radii[i].first, three_radii[i].second};
