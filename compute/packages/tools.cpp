@@ -1,6 +1,4 @@
 #include "tools.h"
-#include <functional>
-
 
 DiskClockwiseCompare::DiskClockwiseCompare(const Disk &base) {
   center_x = base.get_center_x();

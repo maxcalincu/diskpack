@@ -4,21 +4,22 @@
 
 using namespace boost::numeric;
 
-typedef long double BaseType;
+using BaseType = long double;                                                     /// using alias in case one wants to swap long double with a more precise type
 
-typedef interval<
+using Interval = interval<                                                        /// Interval arithmetic is used
     BaseType,
     interval_lib::policies<
         interval_lib::save_state<interval_lib::rounded_transc_exact<BaseType>>,
-        interval_lib::checking_base<BaseType>>>
-    Interval;
-typedef std::pair<Interval, Interval> IntervalPair;
+        interval_lib::checking_base<BaseType>>>;
+                                                                             
+using IntervalPair = std::pair<Interval, Interval>;                               
 
 const BaseType epsilon = .00000000001;
 
 const Interval one{1 - epsilon, 1 + epsilon}, zero{-epsilon, epsilon};
 
-struct SpiralSimilarityOperator {
+/// Spiral similarity operator is used to compute the position of a disk tangent to two other disks 
+struct SpiralSimilarityOperator {                                                   
   Interval x;
   Interval y;
 
@@ -43,7 +44,8 @@ std::ostream &operator<<(std::ostream &out, const Interval &x);
 
 #define INSPECT(expr) std::cout << #expr << ": " << (expr) << "\n";
 
-class Disk {
+/// Disk class
+class Disk {                                                                        
   Interval center_x, center_y, radius;
   size_t disk_type;
 

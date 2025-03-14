@@ -2,13 +2,22 @@
 #include "geometry.h"
 #pragma once
 
+/// Status of generation process
+enum PackingStatus {  complete,         /// packing has been generated 
+                      invalid,          /// no packing with these radii exists
+                      precision_error,  /// signals that precision upper bound was violated
+                                        /// (one might need to decrease the packing radius in this case)
+                      corona_error      /// signals that corona assumption was violated 
+                                        /// (most likely due to the fact that precision upper bound is too big)
+                    };
 
-enum PackingStatus { complete, invalid, precision_error, corona_error };
 
-
-using QueueType = std::multiset<Disk *, decltype(&LessNormCompare)>;
+using QueueType = std::multiset<Disk *, decltype(&LessNormCompare)>;    /// Priority queue which supports insertion, exctraction on key. 
+                                                                        /// Yields disks which are closer to the (0, 0)
 using SSORef = std::reference_wrapper<SpiralSimilarityOperator>;
 
+/// Lookup table with spiral similarity operators. Since there at most radii.size()^3 different triplets of radii
+/// (therefore at most radii.size()^3 different operators) lookup table is used to reduces the number of redundant computations
 
 class OperatorLookupTable {
   std::vector<SpiralSimilarityOperator> values;
@@ -31,6 +40,6 @@ struct DiskClockwiseCompare {
   bool operator()(const Disk *a, const Disk *b) const;
 };
 
-void DumpPacking(CDP::Packing &storage_packing, const std::list<Disk> &packing,
+void DumpPacking(CDP::Packing &storage_packing, const std::list<Disk> &packing, /// Helper functions for packing storing
                  BaseType packing_radius);
-void WritePackingToFile(CDP::Packing &packing, const std::string &filename);
+void WritePackingToFile(CDP::Packing &packing, const std::string &filename);    ///

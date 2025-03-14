@@ -9,6 +9,13 @@ inline bool PackingGenerator::HasIntersection(const Disk &new_disk) {
       [&new_disk](const Disk &disk) { return new_disk.intersects(disk); });
 }
 
+inline bool PackingGenerator::IsInBounds(const Disk *disk) {
+  return disk == nullptr ? false
+                         : cerle(disk->get_norm(),
+                                (packing_radius - disk->get_radius()) *
+                                   (packing_radius - disk->get_radius()));
+}
+
 void PackingGenerator::Push(Disk &&new_disk, size_t index) {
   packing.push_back(std::move(new_disk));
   disk_queue.insert(&packing.back());
@@ -22,7 +29,6 @@ void PackingGenerator::Pop(size_t index) {
 }
 
 PackingStatus PackingGenerator::GapFill(Corona &corona) {
-  // std::cout << "gapfill\n";
 
   std::vector<size_t> shuffle(radii.size());
   std::iota(shuffle.begin(), shuffle.end(), 0);
@@ -37,7 +43,7 @@ PackingStatus PackingGenerator::GapFill(Corona &corona) {
   for (size_t i = 0; i < radii.size(); ++i) {
     corona.PeekNewDisk(new_disk, shuffle[i]);
     
-    if (new_disk.precision() > precision_threshold) {
+    if (new_disk.precision() > precision_upper_bound) {
       return PackingStatus::precision_error;
     }
     
@@ -59,15 +65,7 @@ PackingStatus PackingGenerator::GapFill(Corona &corona) {
   return PackingStatus::invalid;
 }
 
-inline bool PackingGenerator::IsInBounds(const Disk *disk) {
-  return disk == nullptr ? false
-                         : cerle(disk->get_norm(),
-                                 (packing_radius - disk->get_radius()) *
-                                     (packing_radius - disk->get_radius()));
-}
-
 PackingStatus PackingGenerator::AdvancePacking() {
-  // std::cout << "advance\n";
   Disk *base = nullptr;
   while (!IsInBounds(base) && !disk_queue.empty()) {
     base = disk_queue.extract(disk_queue.begin()).value();
@@ -114,10 +112,10 @@ PackingStatus PackingGenerator::FindPacking() {
 
 PackingGenerator::PackingGenerator(const std::vector<Interval> &radii_,
                                    const BaseType &packing_radius_,
-                                   const BaseType &precision_threshold_)
+                                   const BaseType &precision_upper_bound_)
     : radii(radii_), packing_radius{packing_radius_},
       disk_queue(LessNormCompare), frequency_table(radii_.size(), 0),
-      lookup_table(radii_), precision_threshold(precision_threshold_) {};
+      lookup_table(radii_), precision_upper_bound(precision_upper_bound_) {};
 
 void PackingGenerator::Reset() {
   disk_queue.clear();
