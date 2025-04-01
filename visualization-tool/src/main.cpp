@@ -1,8 +1,8 @@
-#include "consts.h"
-#include "packages/geometry.h"
-#include "packages/tools.h"
-#include "packages/generator.h"
-#include <bits/stdc++.h>
+#include <diskpack/constants.h>
+#include <diskpack/generator.h>
+
+#include <chrono>
+#include <iostream>
 
 using std::chrono::duration_cast;
 using std::chrono::high_resolution_clock;
@@ -33,36 +33,18 @@ int main(int argc, char *argv[]) {
   BaseType precision_threshold = 0.5;
   PackingGenerator generator{radii, packing_radius, precision_threshold};
 
-  int n = 1;
   PackingStatus status;
   auto t1 = high_resolution_clock::now();
-  for (int i = 0; i < n; ++i) {
-    status = generator.FindPacking();
-  }
-  // std::cout << sizeof(Disk) << " " << sizeof(SpiralSimilarityOperator) << " "
-  // <<  sizeof(Interval) << " " << sizeof(Disk*) << "\n";
+  status = generator.Generate();
   auto t2 = high_resolution_clock::now();
 
   auto ms_int = duration_cast<milliseconds>(t2 - t1);
-  std::cout << ms_int.count() / n << "ms\n";
+  std::cout << ms_int.count() << "ms\n";
 
-  switch (status) {
-    case PackingStatus::complete:
-      generator.Dump(storage_file);
-      std::cout << "complete\n";
-      break;
-    case PackingStatus::invalid:
-      std::cout << "invalid\n";
-      break;
-    case PackingStatus::corona_error:
-      generator.Dump(storage_file);
-      std::cout << "corona_error\n";
-      break;
-    case PackingStatus::precision_error:
-      generator.Dump(storage_file);
-      std::cout << "precision_error\n";
-      break;
+  if (status != PackingStatus::invalid) {
+    DumpPacking(storage_file, generator.GetPacking(), generator.GetRadius());
   }
+  std::cout << status << "\n";
 
   return 0;
 }

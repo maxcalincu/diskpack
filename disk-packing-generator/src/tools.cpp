@@ -1,4 +1,21 @@
-#include "tools.h"
+#include <diskpack/tools.h>
+
+#include "../generated/cw.pb.h"
+#include <fstream>
+
+std::ostream &operator<<(std::ostream &out, PackingStatus status) {
+  switch (status) {
+    case PackingStatus::complete:
+      return out << "complete";
+    case PackingStatus::invalid:
+      return out << "invalid";
+    case PackingStatus::corona_error:
+      return out << "corona_error";
+    case PackingStatus::precision_error:
+      return out << "precision_error";
+  }
+  return out;
+}
 
 DiskClockwiseCompare::DiskClockwiseCompare(const Disk &base) {
   center_x = base.get_center_x();
@@ -18,26 +35,23 @@ bool DiskClockwiseCompare::operator()(const Disk *a, const Disk *b) const {
                                          : cergt(by * ax - ay * bx, 0.0L))));
 }
 
-void DumpPacking(CDP::Packing &storage_packing, const std::list<Disk> &packing,
-                 BaseType packing_radius) {
-  CDP::Disk *disk = nullptr;
-  storage_packing.set_dimensions(packing_radius);
-  for (auto &d : packing) {
-    disk = storage_packing.add_disks();
-    disk->set_radius(median(d.get_radius()));
-    disk->set_x(median(d.get_center_x()));
-    disk->set_y(median(d.get_center_y()));
-    disk->set_size_type(d.get_type());
-  }
-}
+void DumpPacking(const std::string &storage_file, const std::list<Disk> &packing, BaseType packing_radius) {
+    CDP::Packing storage_packing;
+    CDP::Disk *disk = nullptr;
+    storage_packing.set_dimensions(packing_radius);
 
-void WritePackingToFile(CDP::Packing &packing, const std::string &filename) {
-  std::fstream output(filename,
-                      std::ios::out | std::ios::trunc | std::ios::binary);
-  if (!packing.SerializeToOstream(&output)) {
-    std::cerr << "Failed to write packing."
-              << "\n";
-  }
+    for (auto &d : packing) {
+      disk = storage_packing.add_disks();
+      disk->set_radius(median(d.get_radius()));
+      disk->set_x(median(d.get_center_x()));
+      disk->set_y(median(d.get_center_y()));
+      disk->set_size_type(d.get_type());
+    }
+
+    std::fstream output(storage_file, std::ios::out | std::ios::trunc | std::ios::binary);
+    if (!storage_packing.SerializeToOstream(&output)) {
+      std::cerr << "Failed to write packing\n";
+    }
 }
 
 inline size_t OperatorLookupTable::GetIndex(size_t i, size_t j, size_t k) {

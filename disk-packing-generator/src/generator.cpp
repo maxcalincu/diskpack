@@ -1,19 +1,24 @@
-#include "generator.h"
+#include <diskpack/generator.h>
+#include <random>
 
 std::random_device rd;
 std::mt19937 g(rd());
 
-inline bool PackingGenerator::HasIntersection(const Disk &new_disk) {
+inline bool PackingGenerator::HasIntersection(const Disk &new_disk) const {
   return std::any_of(
       packing.begin(), packing.end(),
       [&new_disk](const Disk &disk) { return new_disk.intersects(disk); });
 }
 
-inline bool PackingGenerator::IsInBounds(const Disk *disk) {
+inline bool PackingGenerator::IsInBounds(const Disk *disk) const {
   return disk == nullptr ? false
                          : cerle(disk->get_norm(),
                                 (packing_radius - disk->get_radius()) *
                                    (packing_radius - disk->get_radius()));
+}
+
+void PackingGenerator::SetGeneratedRadius(const Disk& furthest_disk) {
+  generated_radius = median(sqrt(furthest_disk.get_norm()) + furthest_disk.get_radius());
 }
 
 void PackingGenerator::Push(Disk &&new_disk, size_t index) {
@@ -28,11 +33,15 @@ void PackingGenerator::Pop(size_t index) {
   packing.pop_back();
 }
 
+void PackingGenerator::ShuffleIndexes(std::vector<size_t> &shuffle) const {
+  std::iota(shuffle.begin(), shuffle.end(), 0);
+  std::shuffle(shuffle.begin(), shuffle.end(), g);
+}
+
 PackingStatus PackingGenerator::GapFill(Corona &corona) {
 
   std::vector<size_t> shuffle(radii.size());
-  std::iota(shuffle.begin(), shuffle.end(), 0);
-  std::shuffle(shuffle.begin(), shuffle.end(), g);
+  ShuffleIndexes(shuffle);
 
   if (corona.IsCompleted()) {
     return AdvancePacking();
@@ -44,6 +53,7 @@ PackingStatus PackingGenerator::GapFill(Corona &corona) {
     corona.PeekNewDisk(new_disk, shuffle[i]);
     
     if (new_disk.precision() > precision_upper_bound) {
+      SetGeneratedRadius(corona.GetBase());
       return PackingStatus::precision_error;
     }
     
@@ -71,16 +81,17 @@ PackingStatus PackingGenerator::AdvancePacking() {
     base = disk_queue.extract(disk_queue.begin()).value();
   }
   if (!IsInBounds(base)) {
-    return (std::find(frequency_table.begin(), frequency_table.end(), 0) !=
-                    frequency_table.end()
-                ? PackingStatus::invalid
-                : PackingStatus::complete);
+    if (std::find(frequency_table.begin(), frequency_table.end(), 0) != frequency_table.end()) {
+      return PackingStatus::invalid;
+    }
+    SetGeneratedRadius(*base);
+    return PackingStatus::complete;
   }
 
   Corona corona(*base, packing, lookup_table);
   if (!corona.IsContinuous()) {
-    packing.emplace_back(base->get_center_x(), base->get_center_y(),
-                         Interval{0.2}, 4);
+    // packing.emplace_back(base->get_center_x(), base->get_center_y(), Interval{0.2}, 4);
+    SetGeneratedRadius(*base);
     return PackingStatus::corona_error;
   }
 
@@ -91,7 +102,7 @@ PackingStatus PackingGenerator::AdvancePacking() {
   return status;
 }
 
-PackingStatus PackingGenerator::FindPacking() {
+PackingStatus PackingGenerator::Generate() {
   Reset();
   Push(Disk(zero, zero, radii[0], 0), 0);
 
@@ -102,7 +113,6 @@ PackingStatus PackingGenerator::FindPacking() {
     if (status != PackingStatus::invalid) {
       return status;
     }
-
     Pop(i);
   }
 
@@ -115,16 +125,18 @@ PackingGenerator::PackingGenerator(const std::vector<Interval> &radii_,
                                    const BaseType &precision_upper_bound_)
     : radii(radii_), packing_radius{packing_radius_},
       disk_queue(LessNormCompare), frequency_table(radii_.size(), 0),
-      lookup_table(radii_), precision_upper_bound(precision_upper_bound_) {};
+      lookup_table(radii_), precision_upper_bound(precision_upper_bound_), generated_radius(0) {};
 
 void PackingGenerator::Reset() {
   disk_queue.clear();
   packing.clear();
+  generated_radius = 0;
   std::fill(frequency_table.begin(), frequency_table.end(), 0);
 }
 
-void PackingGenerator::Dump(const std::string &storage_file) {
-  CDP::Packing storage_packing;
-  DumpPacking(storage_packing, packing, packing_radius);
-  WritePackingToFile(storage_packing, storage_file);
+const std::list<Disk>& PackingGenerator::GetPacking() {
+    return packing;
+}
+const BaseType& PackingGenerator::GetRadius() {
+  return packing_radius;
 }

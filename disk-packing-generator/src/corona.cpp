@@ -1,4 +1,4 @@
-#include "corona.h"
+#include <diskpack/corona.h>
 
 SpiralSimilarityOperator Corona::GetOperatorsProduct(
     const size_t &begin, const size_t &end,
@@ -111,4 +111,8 @@ void Corona::Pop() {
   (use_front) ? operators_front.pop_back() : operators_back.pop_back();
 
   (use_front) ? corona.pop_front() : corona.pop_back();
+}
+
+const Disk& Corona::GetBase() {
+  return base;
 }

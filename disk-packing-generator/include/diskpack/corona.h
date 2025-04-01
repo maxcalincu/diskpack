@@ -1,4 +1,6 @@
-#include "tools.h"
+#include <deque>
+#include <diskpack/tools.h>
+#include <stack>
 #pragma once
 
 /// Corona class
@@ -24,8 +26,9 @@ public:
   Corona(const Disk &b, const std::list<Disk> &packing,
     OperatorLookupTable &lookup_table_);
   bool IsCompleted() const;                               /// Checks whether corona is completed
-  bool IsContinuous() const;                              /// Checks the assumption from row 10 and 11
+  bool IsContinuous() const;                              /// Checks the assumption from row 7 and 8
   void PeekNewDisk(Disk &new_disk, size_t index);         /// Constructs a new disk without changing the state (eventually)
   void Push(Disk *disk, size_t index);                    /// Pushes new disk into corona
   void Pop();                                             /// Pops a disk in LIFO order
+  const Disk& GetBase();
 };

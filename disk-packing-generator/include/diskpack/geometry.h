@@ -1,4 +1,3 @@
-#include <bits/stdc++.h>
 #include <boost/numeric/interval.hpp>
 #pragma once
 

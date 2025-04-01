@@ -1,8 +1,11 @@
 consts/
 build/
 storage/*.txt
-visualize/images/*.png
 draft.txt
 .vscode
-visualize/packages/__pycache__
-compute/main.cpp
+.cache
+
+visualization-tool/images/*.png
+visualization-tool/src/__pycache__
+_deps
+shad-links.yaml

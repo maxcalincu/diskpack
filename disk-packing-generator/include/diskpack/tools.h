@@ -1,5 +1,8 @@
-#include "cw.pb.h"
-#include "geometry.h"
+#include <diskpack/geometry.h>
+
+#include <list>
+#include <set>
+#include <vector>
 #pragma once
 
 /// Status of generation process
@@ -11,10 +14,11 @@ enum PackingStatus {  complete,         /// packing has been generated
                                         /// (most likely due to the fact that precision upper bound is too big)
                     };
 
-
 using QueueType = std::multiset<Disk *, decltype(&LessNormCompare)>;    /// Priority queue which supports insertion, exctraction on key. 
                                                                         /// Yields disks which are closer to the (0, 0)
 using SSORef = std::reference_wrapper<SpiralSimilarityOperator>;
+
+std::ostream &operator<<(std::ostream &out, PackingStatus status);
 
 /// Lookup table with spiral similarity operators. Since there at most radii.size()^3 different triplets of radii
 /// (therefore at most radii.size()^3 different operators) lookup table is used to reduces the number of redundant computations
@@ -40,6 +44,4 @@ struct DiskClockwiseCompare {
   bool operator()(const Disk *a, const Disk *b) const;
 };
 
-void DumpPacking(CDP::Packing &storage_packing, const std::list<Disk> &packing, /// Helper functions for packing storing
-                 BaseType packing_radius);
-void WritePackingToFile(CDP::Packing &packing, const std::string &filename);    ///
+void DumpPacking(const std::string &storage_file, const std::list<Disk> &packing, BaseType packing_radius); /// Helper functions for storing packings 

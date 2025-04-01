@@ -1,4 +1,4 @@
-#include "geometry.h"
+#include <diskpack/geometry.h>
 
 SpiralSimilarityOperator::SpiralSimilarityOperator(const Interval &x_,
                                                    const Interval &y_)
@@ -66,9 +66,9 @@ SpiralSimilarityOperator::operator=(SpiralSimilarityOperator &&other) {
 SpiralSimilarityOperator::SpiralSimilarityOperator()
     : SpiralSimilarityOperator{1, 0} {}
 
-std::ostream &operator<<(std::ostream &out, const Interval &x) {
-  return out << x.lower() << " " << x.upper();
-}
+// std::ostream &operator<<(std::ostream &out, const Interval &x) {
+//   return out << x.lower() << " " << x.upper();
+// }
 
 Disk::Disk(Interval center_x_, Interval center_y_, Interval radius_,
            size_t disk_type_)
