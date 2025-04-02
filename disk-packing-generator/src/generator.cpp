@@ -1,3 +1,4 @@
+#include "diskpack/tools.h"
 #include <diskpack/generator.h>
 #include <random>
 
@@ -21,6 +22,13 @@ inline bool PackingGenerator::IsInBounds(const Disk *disk) const {
 void PackingGenerator::SetGeneratedRadius(const Disk &furthest_disk) {
   generated_radius =
       median(sqrt(furthest_disk.get_norm()) + furthest_disk.get_radius());
+}
+
+void PackingGenerator::SetPackingRadius(const BaseType &new_packing_radius) {
+  packing_radius = new_packing_radius;
+}
+void PackingGenerator::SetSizeUpperBound(const size_t &new_size) {
+  size_upper_bound = new_size;
 }
 
 void PackingGenerator::Push(Disk &&new_disk, size_t index) {
@@ -77,16 +85,28 @@ PackingStatus PackingGenerator::GapFill(Corona &corona) {
   return PackingStatus::invalid;
 }
 
+bool PackingGenerator::SatisfiesConstraints() const {
+  return std::find(frequency_table.begin(), frequency_table.end(), 0) == frequency_table.end();
+}
+
 PackingStatus PackingGenerator::AdvancePacking() {
   Disk *base = nullptr;
-  while (!IsInBounds(base) && !disk_queue.empty()) {
-    base = disk_queue.extract(disk_queue.begin()).value();
+  if (disk_queue.empty()) {
+    return PackingStatus::invalid;
   }
+  
+  base = disk_queue.extract(disk_queue.begin()).value();
+
   if (!IsInBounds(base)) {
-    if (std::find(frequency_table.begin(), frequency_table.end(), 0) !=
-        frequency_table.end()) {
+    disk_queue.insert(base);
+    if (!SatisfiesConstraints()) {
       return PackingStatus::invalid;
     }
+    SetGeneratedRadius(*base);
+    return PackingStatus::complete;
+  }
+
+  if (packing.size() >= size_upper_bound) {
     SetGeneratedRadius(*base);
     return PackingStatus::complete;
   }
@@ -126,11 +146,12 @@ PackingStatus PackingGenerator::Generate() {
 
 PackingGenerator::PackingGenerator(const std::vector<Interval> &radii_,
                                    const BaseType &packing_radius_,
-                                   const BaseType &precision_upper_bound_)
+                                   const BaseType &precision_upper_bound_,
+                                   const size_t &size_upper_bound_)
     : radii(radii_), packing_radius{packing_radius_},
       disk_queue(LessNormCompare), frequency_table(radii_.size(), 0),
       lookup_table(radii_), precision_upper_bound(precision_upper_bound_),
-      generated_radius(0) {};
+      generated_radius(0), size_upper_bound(size_upper_bound_){};
 
 void PackingGenerator::Reset() {
   disk_queue.clear();
@@ -141,5 +162,6 @@ void PackingGenerator::Reset() {
 
 const std::list<Disk> &PackingGenerator::GetPacking() { return packing; }
 const BaseType &PackingGenerator::GetRadius() { return packing_radius; }
+const BaseType &PackingGenerator::GetGeneratedRadius() { return generated_radius; }
 
 } // namespace CDP

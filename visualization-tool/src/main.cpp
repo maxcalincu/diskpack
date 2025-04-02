@@ -32,8 +32,9 @@ int main(int argc, char *argv[]) {
   // radii = proposed1;
 
   storage_file = std::string{"../storage/"} + char('0') + std::string{".txt"};
-  BaseType precision_threshold = 0.5;
-  PackingGenerator generator{radii, packing_radius, precision_threshold};
+  BaseType precision_upper_bound = 0.5;
+  size_t size_upper_bound = 150;
+  PackingGenerator generator{radii, packing_radius, precision_upper_bound, size_upper_bound};
 
   PackingStatus status;
   auto t1 = high_resolution_clock::now();
@@ -44,7 +45,7 @@ int main(int argc, char *argv[]) {
   std::cout << ms_int.count() << "ms\n";
 
   if (status != PackingStatus::invalid) {
-    DumpPacking(storage_file, generator.GetPacking(), generator.GetRadius());
+    DumpPacking(storage_file, generator.GetPacking(), generator.GetGeneratedRadius());
   }
   std::cout << status << "\n";
 
