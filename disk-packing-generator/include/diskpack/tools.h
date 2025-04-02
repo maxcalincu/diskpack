@@ -5,23 +5,34 @@
 #include <vector>
 #pragma once
 
-/// Status of generation process
-enum PackingStatus {  complete,         /// packing has been generated 
-                      invalid,          /// no packing with these radii exists
-                      precision_error,  /// signals that precision upper bound was violated
-                                        /// (one might need to decrease the packing radius in this case)
-                      corona_error      /// signals that corona assumption was violated 
-                                        /// (most likely due to the fact that precision upper bound is too big)
-                    };
+namespace CDP {
 
-using QueueType = std::multiset<Disk *, decltype(&LessNormCompare)>;    /// Priority queue which supports insertion, exctraction on key. 
-                                                                        /// Yields disks which are closer to the (0, 0)
+/// Status of generation process
+enum PackingStatus {
+  complete,        /// packing has been generated
+  invalid,         /// no packing with these radii exists
+  precision_error, /// signals that precision upper bound was violated
+                   /// (one might need to decrease the packing radius in this
+                   /// case)
+  corona_error     /// signals that corona assumption was violated
+               /// (most likely due to the fact that precision upper bound is
+               /// too big)
+};
+
+using QueueType =
+    std::multiset<Disk *,
+                  decltype(&LessNormCompare)>; /// Priority queue which supports
+                                               /// insertion, exctraction on
+                                               /// key. Yields disks which are
+                                               /// closer to the (0, 0)
 using SSORef = std::reference_wrapper<SpiralSimilarityOperator>;
 
 std::ostream &operator<<(std::ostream &out, PackingStatus status);
 
-/// Lookup table with spiral similarity operators. Since there at most radii.size()^3 different triplets of radii
-/// (therefore at most radii.size()^3 different operators) lookup table is used to reduces the number of redundant computations
+/// Lookup table with spiral similarity operators. Since there at most
+/// radii.size()^3 different triplets of radii (therefore at most radii.size()^3
+/// different operators) lookup table is used to reduces the number of redundant
+/// computations
 
 class OperatorLookupTable {
   std::vector<SpiralSimilarityOperator> values;
@@ -31,8 +42,7 @@ class OperatorLookupTable {
 
 public:
   const std::vector<Interval> &radii;
-  SSORef operator()(size_t base_type, size_t prev_type,
-                                       size_t next_type);
+  SSORef operator()(size_t base_type, size_t prev_type, size_t next_type);
   SSORef operator()();
   OperatorLookupTable(const std::vector<Interval> &radii_);
 };
@@ -44,4 +54,8 @@ struct DiskClockwiseCompare {
   bool operator()(const Disk *a, const Disk *b) const;
 };
 
-void DumpPacking(const std::string &storage_file, const std::list<Disk> &packing, BaseType packing_radius); /// Helper functions for storing packings 
+void DumpPacking(
+    const std::string &storage_file, const std::list<Disk> &packing,
+    BaseType packing_radius); /// Helper functions for storing packings
+
+} // namespace CDP

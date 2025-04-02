@@ -1,5 +1,6 @@
 #include <diskpack/geometry.h>
 
+namespace CDP {
 SpiralSimilarityOperator::SpiralSimilarityOperator(const Interval &x_,
                                                    const Interval &y_)
     : x{x_}, y{y_} {}
@@ -128,3 +129,5 @@ bool LessNormCompare(const Disk *a, const Disk *b) {
   return median(sqrt(a->get_norm()) + a->get_radius()) <
          median(sqrt(b->get_norm()) + b->get_radius());
 }
+
+} // namespace CDP

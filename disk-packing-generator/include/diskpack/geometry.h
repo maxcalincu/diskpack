@@ -1,24 +1,28 @@
 #include <boost/numeric/interval.hpp>
 #pragma once
 
+namespace CDP {
+
 using namespace boost::numeric;
 
-using BaseType = long double;                                                     /// using alias in case one wants to swap long double with a more precise type
+using BaseType = long double; /// using alias in case one wants to swap long
+                              /// double with a more precise type
 
-using Interval = interval<                                                        /// Interval arithmetic is used
+using Interval = interval< /// Interval arithmetic is used
     BaseType,
     interval_lib::policies<
         interval_lib::save_state<interval_lib::rounded_transc_exact<BaseType>>,
         interval_lib::checking_base<BaseType>>>;
-                                                                             
-using IntervalPair = std::pair<Interval, Interval>;                               
+
+using IntervalPair = std::pair<Interval, Interval>;
 
 const BaseType epsilon = .00000000001;
 
 const Interval one{1 - epsilon, 1 + epsilon}, zero{-epsilon, epsilon};
 
-/// Spiral similarity operator is used to compute the position of a disk tangent to two other disks 
-struct SpiralSimilarityOperator {                                                   
+/// Spiral similarity operator is used to compute the position of a disk tangent
+/// to two other disks
+struct SpiralSimilarityOperator {
   Interval x;
   Interval y;
 
@@ -44,7 +48,7 @@ std::ostream &operator<<(std::ostream &out, const Interval &x);
 #define INSPECT(expr) std::cout << #expr << ": " << (expr) << "\n";
 
 /// Disk class
-class Disk {                                                                        
+class Disk {
   Interval center_x, center_y, radius;
   size_t disk_type;
 
@@ -68,3 +72,5 @@ public:
   BaseType precision() const;
 };
 bool LessNormCompare(const Disk *a, const Disk *b);
+
+} // namespace CDP

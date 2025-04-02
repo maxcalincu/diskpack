@@ -4,6 +4,7 @@
 std::random_device rd;
 std::mt19937 g(rd());
 
+namespace CDP {
 inline bool PackingGenerator::HasIntersection(const Disk &new_disk) const {
   return std::any_of(
       packing.begin(), packing.end(),
@@ -13,12 +14,13 @@ inline bool PackingGenerator::HasIntersection(const Disk &new_disk) const {
 inline bool PackingGenerator::IsInBounds(const Disk *disk) const {
   return disk == nullptr ? false
                          : cerle(disk->get_norm(),
-                                (packing_radius - disk->get_radius()) *
-                                   (packing_radius - disk->get_radius()));
+                                 (packing_radius - disk->get_radius()) *
+                                     (packing_radius - disk->get_radius()));
 }
 
-void PackingGenerator::SetGeneratedRadius(const Disk& furthest_disk) {
-  generated_radius = median(sqrt(furthest_disk.get_norm()) + furthest_disk.get_radius());
+void PackingGenerator::SetGeneratedRadius(const Disk &furthest_disk) {
+  generated_radius =
+      median(sqrt(furthest_disk.get_norm()) + furthest_disk.get_radius());
 }
 
 void PackingGenerator::Push(Disk &&new_disk, size_t index) {
@@ -51,12 +53,12 @@ PackingStatus PackingGenerator::GapFill(Corona &corona) {
 
   for (size_t i = 0; i < radii.size(); ++i) {
     corona.PeekNewDisk(new_disk, shuffle[i]);
-    
+
     if (new_disk.precision() > precision_upper_bound) {
       SetGeneratedRadius(corona.GetBase());
       return PackingStatus::precision_error;
     }
-    
+
     if (HasIntersection(new_disk)) {
       continue;
     }
@@ -81,7 +83,8 @@ PackingStatus PackingGenerator::AdvancePacking() {
     base = disk_queue.extract(disk_queue.begin()).value();
   }
   if (!IsInBounds(base)) {
-    if (std::find(frequency_table.begin(), frequency_table.end(), 0) != frequency_table.end()) {
+    if (std::find(frequency_table.begin(), frequency_table.end(), 0) !=
+        frequency_table.end()) {
       return PackingStatus::invalid;
     }
     SetGeneratedRadius(*base);
@@ -90,7 +93,8 @@ PackingStatus PackingGenerator::AdvancePacking() {
 
   Corona corona(*base, packing, lookup_table);
   if (!corona.IsContinuous()) {
-    // packing.emplace_back(base->get_center_x(), base->get_center_y(), Interval{0.2}, 4);
+    // packing.emplace_back(base->get_center_x(), base->get_center_y(),
+    // Interval{0.2}, 4);
     SetGeneratedRadius(*base);
     return PackingStatus::corona_error;
   }
@@ -125,7 +129,8 @@ PackingGenerator::PackingGenerator(const std::vector<Interval> &radii_,
                                    const BaseType &precision_upper_bound_)
     : radii(radii_), packing_radius{packing_radius_},
       disk_queue(LessNormCompare), frequency_table(radii_.size(), 0),
-      lookup_table(radii_), precision_upper_bound(precision_upper_bound_), generated_radius(0) {};
+      lookup_table(radii_), precision_upper_bound(precision_upper_bound_),
+      generated_radius(0) {};
 
 void PackingGenerator::Reset() {
   disk_queue.clear();
@@ -134,9 +139,7 @@ void PackingGenerator::Reset() {
   std::fill(frequency_table.begin(), frequency_table.end(), 0);
 }
 
-const std::list<Disk>& PackingGenerator::GetPacking() {
-    return packing;
-}
-const BaseType& PackingGenerator::GetRadius() {
-  return packing_radius;
-}
+const std::list<Disk> &PackingGenerator::GetPacking() { return packing; }
+const BaseType &PackingGenerator::GetRadius() { return packing_radius; }
+
+} // namespace CDP

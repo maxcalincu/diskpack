@@ -1,8 +1,10 @@
 #include <diskpack/corona.h>
 
-SpiralSimilarityOperator Corona::GetOperatorsProduct(
-    const size_t &begin, const size_t &end,
-    const std::vector<SSORef> &operators) const {
+namespace CDP {
+
+SpiralSimilarityOperator
+Corona::GetOperatorsProduct(const size_t &begin, const size_t &end,
+                            const std::vector<SSORef> &operators) const {
   switch (end - begin) {
   case 0:
     return SpiralSimilarityOperator();
@@ -11,10 +13,11 @@ SpiralSimilarityOperator Corona::GetOperatorsProduct(
   case 2:
     return operators[begin].get() * operators[begin + 1].get();
   case 3:
-    return operators[begin].get() * (operators[begin + 1].get() * operators[begin + 2].get());
+    return operators[begin].get() *
+           (operators[begin + 1].get() * operators[begin + 2].get());
   case 4:
-    return (operators[begin].get()     *  operators[begin + 1].get()) *
-           (operators[begin + 2].get() *  operators[begin + 3].get());
+    return (operators[begin].get() * operators[begin + 1].get()) *
+           (operators[begin + 2].get() * operators[begin + 3].get());
   }
   auto mid = (begin + end) / 2;
   return GetOperatorsProduct(begin, mid, operators) *
@@ -28,7 +31,7 @@ bool Corona::IsCompleted() const {
           (corona.front()->get_center_y() - base.get_center_y()) -
       (corona.front()->get_center_x() - base.get_center_x()) *
           (corona.back()->get_center_y() - base.get_center_y());
-          
+
   return (corona.size() > 2 && corona.back()->tangent(*corona.front()) &&
           cergt(cross_product, 0.0L));
 }
@@ -113,6 +116,6 @@ void Corona::Pop() {
   (use_front) ? corona.pop_front() : corona.pop_back();
 }
 
-const Disk& Corona::GetBase() {
-  return base;
-}
+const Disk &Corona::GetBase() { return base; }
+
+} // namespace CDP

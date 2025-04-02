@@ -9,6 +9,8 @@ using std::chrono::high_resolution_clock;
 using std::chrono::milliseconds;
 std::string storage_file = "../storage/1.txt";
 
+using namespace CDP;
+
 int main(int argc, char *argv[]) {
   if (argc < 3) {
     std::cerr << "Usage:  " << argv[0] << " <packing-number> <packing-radius>" << std::endl;
