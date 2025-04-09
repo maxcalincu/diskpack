@@ -13,10 +13,10 @@ namespace CDP {
         RadiiRegion(std::vector<Interval> radii_);
     };
 
-    template <typename Checker>
-    concept HasInspectMethod = requires(Checker c, RadiiRegion r) {
-        {c.Inspect(r)} -> std::same_as<bool>;
-    };
+    // template <typename Checker>                                      /// i am reluctant to swtich to C++20
+    // concept HasInspectMethod = requires(Checker c, RadiiRegion r) {
+    //     {c.Inspect(r)} -> std::same_as<bool>;
+    // };
 
     using RadiiList = std::list<RadiiRegion>;
     

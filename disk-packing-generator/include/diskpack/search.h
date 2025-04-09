@@ -1,12 +1,12 @@
 #include <diskpack/checkers.h>
-// #include <iostream>
 #include <mutex>
 
 #pragma once
 
 namespace CDP {
 
-    template <HasInspectMethod Checker>
+    template <typename Checker>
+    // template <HasInspectMethod Checker>
     class Searcher {
         RadiiList& results;
         Checker c;
@@ -21,11 +21,13 @@ namespace CDP {
         void StartProcessing(const RadiiRegion& region);                                                  /// Public function. Distributes the tasks between multiple threads
     };
 
-    template <HasInspectMethod Checker>
+    template <typename Checker>
+    // template <HasInspectMethod Checker>
     Searcher<Checker>::Searcher(RadiiList &results_, Checker c_, BaseType lower_bound_, BaseType upper_bound_): results{results_}, c{c_},
                                                                                                                 upper_bound(upper_bound_), lower_bound(lower_bound_) {};
-    
-    template <HasInspectMethod Checker>
+                                                                                                                
+    template <typename Checker>
+    // template <HasInspectMethod Checker>
     void Searcher<Checker>::ProcessRegion(const RadiiRegion& region) {
         if (!region.IsTooBig(upper_bound)){
             if (!c.Inspect(region.GetIntervals())) {
@@ -46,7 +48,8 @@ namespace CDP {
         }
     }
 
-    template <HasInspectMethod Checker>
+    template <typename Checker>
+    // template <HasInspectMethod Checker>
     void Searcher<Checker>::StartProcessing(const RadiiRegion& region) {
         std::vector<RadiiRegion> children_regions;
         region.Split(children_regions, 1);      /// k = hardware_concurency

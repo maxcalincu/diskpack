@@ -1,5 +1,8 @@
 This project provides several tools for working with compact disk packings.
 
+
+``diskpack`` is written in C++17. Please make sure that appropriate versions of ``gcc`` and ``clang`` are installed on your device before proceeding.
+
 ## Clone and build project
 To get started, run the following commands:
 ```bash
@@ -10,6 +13,14 @@ $ git clone git@github.com:maxcalincu/diskpackings.git
 $ cd diskpackings
 $ chmod +x build.sh
 $ ./build.sh  # Run from the root directory
+```
+
+
+To pull the changes from remote repository run:
+
+```bash
+$ git checkout master
+$ git pull origin master
 ```
 
 ## visualizer
