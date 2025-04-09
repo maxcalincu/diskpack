@@ -8,4 +8,5 @@ draft.txt
 visualization-tool/images/*.png
 visualization-tool/src/__pycache__
 _deps
-shad-links.yaml
+*.yaml
+*.json

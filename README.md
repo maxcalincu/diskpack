@@ -7,17 +7,14 @@ $ sudo apt upgrade
 $ sudo apt install libboost-all-dev
 $ git clone git@github.com:maxcalincu/diskpackings.git
 $ cd diskpackings
-$ mkdir build && cd build
-$ cmake ..
+$ chmod +x build.sh
+$ ./build.sh  # should be executed from the root directory
 ```
 
 ## Visualizer
-From build directory run
+This is a tool used to generated compact disk packings with set of radii from a given region. To use it run these commands from build directory:
 ```bash
 $ make visualizer
-$ ./visualization-tool/visualizer <packing-number> <packing-radius>
+$ ./visualization-tool/visualizer --help>
 ```
-To modify the behaiviour edit visualization-tool/src/main.cpp (should be straightforward)
-
-## Python notebook
-To produce an image with the generated packing use visualization-tool/notebook.ipynb
+This will display a detailed description. In order to produce an image with the generated packing use visualization-tool/notebook.ipynb
