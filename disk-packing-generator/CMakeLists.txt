@@ -1,9 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 project(cw)
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
 set(DEPS_DIR ${CMAKE_SOURCE_DIR}/_deps)
 set(PROTOBUF_VERSION 3.12.4)
 
@@ -45,7 +42,7 @@ add_library(diskpack SHARED
   src/corona.cpp
   src/generator.cpp
   src/geometry.cpp
-  src/tools.cpp
+  src/checkers.cpp
 )
 
 target_link_libraries(diskpack PRIVATE 

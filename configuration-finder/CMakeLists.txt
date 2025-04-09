@@ -5,8 +5,6 @@ find_package(Threads REQUIRED)
 
 add_executable(finder 
     src/main.cpp
-    src/checkers.cpp
-    src/search.cpp
 )
 
 target_include_directories(finder PUBLIC

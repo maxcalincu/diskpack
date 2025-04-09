@@ -43,8 +43,6 @@ struct SpiralSimilarityOperator {
   SpiralSimilarityOperator();
 };
 
-std::ostream &operator<<(std::ostream &out, const Interval &x);
-
 #define INSPECT(expr) std::cout << #expr << ": " << (expr) << "\n";
 
 /// Disk class
@@ -72,5 +70,4 @@ public:
   BaseType precision() const;
 };
 bool LessNormCompare(const Disk *a, const Disk *b);
-
 } // namespace CDP

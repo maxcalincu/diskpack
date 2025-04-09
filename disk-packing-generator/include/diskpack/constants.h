@@ -2,7 +2,7 @@
 #include <vector>
 #pragma once
 
-using CDP::Interval;
+namespace CDP {
 
 const std::vector<Interval> two_radii{
     Interval{0.637555977, 0.637555978}, Interval{0.545151042, 0.545151043},
@@ -11,9 +11,9 @@ const std::vector<Interval> two_radii{
     Interval{0.280776406, 0.280776407}, Interval{0.154700538, 0.154700539},
     Interval{0.101020514, 0.101020515},
 },
-    proposed1{CDP::one, Interval{0.71331, 0.71332}, Interval{0.62746, 0.62747},
+    proposed1{one, Interval{0.71331, 0.71332}, Interval{0.62746, 0.62747},
               Interval{0.55623, 0.55624}},
-    proposed2{CDP::one, Interval{0.52917, 0.52918}, Interval{0.12573, 0.12574},
+    proposed2{one, Interval{0.52917, 0.52918}, Interval{0.12573, 0.12574},
               Interval{0.09084, 0.09085}, Interval{0.08620, 0.08621}};
 const std::vector<std::pair<Interval, Interval>> three_radii{
     {Interval{0.414213, 0.414215}, Interval{0.154700, 0.154702}},
@@ -181,3 +181,5 @@ const std::vector<std::pair<Interval, Interval>> three_radii{
     {Interval{0.533295, 0.533297}, Interval{0.284404, 0.284406}},
     {Interval{0.386105, 0.386107}, Interval{0.149077, 0.149079}},
 };
+
+} // namespace CDP

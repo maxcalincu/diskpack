@@ -1,11 +1,25 @@
-cmake_minimum_required(VERSION 3.16)
-project(cw)
-find_package(Threads REQUIRED)             
+#include "diskpack/checkers.h"
+#include <diskpack/search.h>
+#include <iostream>
 
-# add_subdirectory(../disk-packing-generator ${CMAKE_BINARY_DIR}/diskpack)
+using namespace CDP;
 
-add_executable(visualizer src/main.cpp)
-target_link_libraries(visualizer PRIVATE
-    diskpack 
-    Threads::Threads
-)
+const size_t DEFAULT_SIZE_UPPER_BOUND = 30;
+const BaseType DEFAULT_PACKING_RADIUS = 5;
+const BaseType DEFAULT_PRECISION_UPPER_BOUND = 0.15;
+
+int main() {
+    RadiiRegion region{std::vector<Interval> {
+        one, 
+        Interval{0.11, 0.13},
+    }};
+    BasicChecker checker{DEFAULT_PACKING_RADIUS, DEFAULT_PRECISION_UPPER_BOUND, DEFAULT_SIZE_UPPER_BOUND};
+    RadiiList list;
+    Searcher<BasicChecker> searcher{list, checker, 0.0001, 0.01};
+    searcher.StartProcessing(region);
+    std::cout << list.size() << "\n";
+    for (auto &x : list) {
+        std::cerr << x.GetIntervals()[1].lower() << " " << x.GetIntervals()[1].upper() << "\n";  
+    }
+    return 0;
+}
