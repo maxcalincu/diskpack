@@ -30,9 +30,10 @@ std::vector<Interval> radii = {
 int main(int argc, char *argv[]) {
   bool measure_duration = false, use_custom_values = false;
   size_t size_upper_bound;
+  size_t central_disk_type;
   BaseType packing_radius;
-  std::string output_file;
   BaseType precision_upper_bound;
+  std::string output_file;
 
   try {
     po::options_description desc("Allowed options");
@@ -43,6 +44,7 @@ int main(int argc, char *argv[]) {
         ("precision,p", po::value<BaseType>()->default_value(DEFAULT_PRECISION_UPPER_BOUND), "Sets an upper limit on the precision of the disk coordinates\n")
         ("number-of-disks,n", po::value<size_t>()->default_value(DEFAULT_SIZE_UPPER_BOUND), "Sets an upper limit on the number of disks the packing contains\n")
         ("region-size,r", po::value<BaseType>()->default_value(DEFAULT_PACKING_RADIUS), "Sets an upper limit on the region size. Only a circular region of the plane with a given radius (provided by this flag) will be covered with disks\n")
+        ("central-disk,c", po::value<size_t>()->required(), "Sets the central disk's type (0 <= i < radii.size()) where i is the index of the corresponding radius in the set. By default the radii are sorted in decreasing order\n")
         ("output,o", po::value<std::string>()->default_value(DEFAULT_OUTPUT_FILE), "Output file to store the generated packing\n")
 
         ("i2", po::value<size_t>(), "Use the i'th radius r which allow a compact packing by discs of sizes 1, r and s (0 <= i < 9)\n")
@@ -62,29 +64,30 @@ int main(int argc, char *argv[]) {
               std::cout << "Usage of " << argv[0] << "\n";
               std::cout << desc << "\n";
               std::cout << "\
-This is a tool used to generated compact disk packings with a radii set from a given region.\n\
-The exection can end with 'complete', 'invalid', 'precision_error' or 'corona_error' status\n\
+The visualizer generates a compact disk packings with some radii set from a given region. To generate an image with the packing, use visualization-tool/notebook.ipynb\n\
+The exection ends with one of the following statuses: 'complete', 'invalid', 'precision_error' and 'corona_error'\n\
 \n\
 'complete' status means that a packing was succesfully generated.\n\
-'invalid' status means that there isn't a radii set in this region that allows a compact disk packing\n\
+'invalid' status means that the region does not contain any radii set that allows a compact disk packing\n\
 'precision_error' status means that the upper limit on the width of the intervals of the disk coordinates was violated. Use -p flag to set it\n\
 'corona_error' status means that the corona continuity assumption was violated. This almost certainly means that coordinate interval width became abnormally big\n\
 \n\
 Use -n and -r flags to set an upper limit on the number of disks and the size of the region covered respectively. Iff at least one of these limits is reached the generation stops with 'complete' status\n\
 The --i2, --i3 and -v flags are used to establish the radii set used. Exactly one of these flags must be provided\n\
 \n\
-The generated packing is stored in an output file (see --output flag). The output file remains untouched iff the execution ends with 'invalid' status\n\
-In order to produce an image with the generated packing use visualization-tool/notebook.ipynb\n";
+The generated packing is stored in an output file (see --output flag). The output file remains untouched iff the execution ends with 'invalid' status\n";
 
               return 0;
         }
+        po::notify(vm);
 
         if (vm.count("measure-duration")) {
           measure_duration = true;
         }
 
-        precision_upper_bound = vm["precision"].as<BaseType>();
         size_upper_bound = vm["number-of-disks"].as<size_t>();
+        central_disk_type = vm["central-disk"].as<size_t>();
+        precision_upper_bound = vm["precision"].as<BaseType>();
         packing_radius = vm["region-size"].as<BaseType>();
         output_file = vm["output"].as<std::string>();
 
@@ -121,7 +124,7 @@ In order to produce an image with the generated packing use visualization-tool/n
   BasicGenerator generator{radii, packing_radius, precision_upper_bound, size_upper_bound};
 
   auto t1 = high_resolution_clock::now();
-  auto status = generator.Generate();
+  auto status = generator.Generate(central_disk_type);
   std::cout << status << "\n";
   auto t2 = high_resolution_clock::now();
 

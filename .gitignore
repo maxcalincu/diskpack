@@ -10,3 +10,4 @@ visualization-tool/src/__pycache__
 _deps
 *.yaml
 *.json
+*.ipynb
