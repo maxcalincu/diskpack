@@ -9,8 +9,8 @@ To get started, run the following commands:
 $ sudo apt update
 $ sudo apt upgrade
 $ sudo apt install libboost-all-dev
-$ git clone git@github.com:maxcalincu/diskpackings.git
-$ cd diskpackings
+$ git clone git@github.com:maxcalincu/diskpack.git
+$ cd diskpack
 $ chmod +x build.sh
 $ ./build.sh  # Run from the root directory
 ```
