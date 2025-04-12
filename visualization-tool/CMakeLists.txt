@@ -4,6 +4,7 @@ find_package(Threads REQUIRED)
 find_package(Boost REQUIRED COMPONENTS program_options)
 
 add_executable(visualizer src/main.cpp)
+
 target_link_libraries(visualizer PRIVATE
     diskpack 
     Threads::Threads

@@ -1,4 +1,5 @@
 #include <diskpack/corona.h>
+#include <vector>
 
 namespace CDP {
 
@@ -155,5 +156,6 @@ OperatorLookupTable::OperatorLookupTable(const std::vector<Interval> &radii_)
       presence(radii_.size() * radii_.size() * radii_.size()) {};
 
 SSORef OperatorLookupTable::operator()() { return std::ref(identity); }
+
 
 } // namespace CDP

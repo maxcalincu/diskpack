@@ -7,10 +7,6 @@ add_executable(finder
     src/main.cpp
 )
 
-target_include_directories(finder PUBLIC
-  ${CMAKE_CURRENT_SOURCE_DIR}/include
-)
-
 target_link_libraries(finder PRIVATE
     diskpack 
     Threads::Threads

@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <diskpack/constants.h>
 #include <diskpack/generator.h>
 
@@ -9,7 +10,6 @@
 using std::chrono::duration_cast;
 using std::chrono::high_resolution_clock;
 using std::chrono::milliseconds;
-std::string storage_file = "../storage/1.txt";
 
 using namespace CDP;
 namespace po = boost::program_options;
@@ -20,11 +20,13 @@ const BaseType DEFAULT_PRECISION_UPPER_BOUND = 0.5;
 const std::string DEFAULT_OUTPUT_FILE = "../storage/default.txt";
 
 std::vector<Interval> radii = {
+  {0.3989583333, 0.399375},
+  {0.46296875, 0.4635416667},
   one,
-  Interval{0.71331, 0.71332}, 
-  Interval{0.62746, 0.62747},
-  Interval{0.55623, 0.55624},
 };
+
+// 0.4675 0.475 interval
+// 0.8275 0.835 interval
 
 
 int main(int argc, char *argv[]) {
@@ -39,16 +41,19 @@ int main(int argc, char *argv[]) {
     po::options_description desc("Allowed options");
     desc.add_options()
         ("help,h", "Show this help message\n")
-        ("measure-duration,d", "Outputs the duration of the Generate() call\n")
+
+        ("region-size,r", po::value<BaseType>()->default_value(DEFAULT_PACKING_RADIUS), "Sets an upper limit on the region size. Only a circular region of the plane with a given radius (provided by this flag) will be covered with disks\n")
+        ("number-of-disks,n", po::value<size_t>()->default_value(DEFAULT_SIZE_UPPER_BOUND), "Sets an upper limit on the number of disks the packing contains\n")
+        ("output,o", po::value<std::string>()->default_value(DEFAULT_OUTPUT_FILE), "Output file to store the generated packing\n")
         
         ("precision,p", po::value<BaseType>()->default_value(DEFAULT_PRECISION_UPPER_BOUND), "Sets an upper limit on the precision of the disk coordinates\n")
-        ("number-of-disks,n", po::value<size_t>()->default_value(DEFAULT_SIZE_UPPER_BOUND), "Sets an upper limit on the number of disks the packing contains\n")
-        ("region-size,r", po::value<BaseType>()->default_value(DEFAULT_PACKING_RADIUS), "Sets an upper limit on the region size. Only a circular region of the plane with a given radius (provided by this flag) will be covered with disks\n")
-        ("central-disk,c", po::value<size_t>()->required(), "Sets the central disk's type (0 <= i < radii.size()) where i is the index of the corresponding radius in the set. By default the radii are sorted in decreasing order\n")
-        ("output,o", po::value<std::string>()->default_value(DEFAULT_OUTPUT_FILE), "Output file to store the generated packing\n")
 
-        ("i2", po::value<size_t>(), "Use the i'th radius r which allow a compact packing by discs of sizes 1, r and s (0 <= i < 9)\n")
-        ("i3", po::value<size_t>(), "Use the i'th pair (r, s) which allow a compact packing by disks of sizes 1, r and s (0 <= i < 164)\n")
+        ("measure-duration,d", "Outputs the duration of the Generate() call\n")
+
+        ("central-disk,c", po::value<size_t>()->default_value(1), "Sets the central disk's type (0 <= i < radii.size()) where i is the index of the corresponding radius in the set. By default the radii are sorted in decreasing order\n")
+
+        ("i2", po::value<size_t>(), "Use the i'th radius r which allow a compact packing by discs of sizes 1, r and s (0 < i <= 9)\n")
+        ("i3", po::value<size_t>(), "Use the i'th pair (r, s) which allow a compact packing by disks of sizes 1, r and s (0 < i <= 164)\n")
         ("values,v", "Use a custom radii configuration written in visualization-tool/src/main.cpp, line 22")
     ;
 
@@ -63,6 +68,8 @@ int main(int argc, char *argv[]) {
         if (vm.count("help")) {
               std::cout << "Usage of " << argv[0] << "\n";
               std::cout << desc << "\n";
+              std::cout << "Examples of usage:\n";
+              std::cout << argv[0] << " -d -p 0.2 -n 200 --i3 53 -r 15\n\n";
               std::cout << "\
 The visualizer generates a compact disk packings with some radii set from a given region. To generate an image with the packing, use visualization-tool/notebook.ipynb\n\
 The exection ends with one of the following statuses: 'complete', 'invalid', 'precision_error' and 'corona_error'\n\
@@ -86,7 +93,6 @@ The generated packing is stored in an output file (see --output flag). The outpu
         }
 
         size_upper_bound = vm["number-of-disks"].as<size_t>();
-        central_disk_type = vm["central-disk"].as<size_t>();
         precision_upper_bound = vm["precision"].as<BaseType>();
         packing_radius = vm["region-size"].as<BaseType>();
         output_file = vm["output"].as<std::string>();
@@ -99,18 +105,25 @@ The generated packing is stored in an output file (see --output flag). The outpu
             throw std::runtime_error("Exactly one flag from {i2, i3, v} must be provided");
           }
         if (vm.count("i2")) {
-          auto i2 = vm["i2"].as<size_t>();
+          auto i2 = vm["i2"].as<size_t>() - 1;
           if (i2 < 0 || i2 >= 9) {
-            throw std::runtime_error("0 <= i2 < 9 constraint violated");
+            throw std::runtime_error("0 < i2 <= 9 constraint violated");
           }
           radii = std::vector<Interval>{one, two_radii[i2]};
         }
         if (vm.count("i3")) {
-          auto i3 = vm["i3"].as<size_t>();
+          auto i3 = vm["i3"].as<size_t>() - 1;
           if (i3 < 0 || i3 >= 164) {
-            throw std::runtime_error("0 <= i3 < 164 constraint violated");
+            throw std::runtime_error("0 < i3 <= 164 constraint violated");
           }
           radii = std::vector<Interval>{one, three_radii[i3].first, three_radii[i3].second};
+        }
+        if (vm.count("central_disk")) {
+          central_disk_type = vm["central-disk"].as<size_t>();
+        } else {
+          central_disk_type = std::distance(radii.begin(), std::min_element(radii.begin(), radii.end(), [](const Interval &a, const Interval &b) {
+            return a.lower() < b.lower();
+          }));
         }
         
   } catch (const po::error& e) {
@@ -133,7 +146,7 @@ The generated packing is stored in an output file (see --output flag). The outpu
     std::cout << ms_int.count() << "ms\n";
   }
   if (status != PackingStatus::invalid) {
-    DumpPacking(output_file, generator.GetPacking(), generator.GetGeneratedRadius());
+    DumpPacking(output_file, generator.GetPacking(), generator.GetGeneratedRadius() + 1);
   }
 
   return 0;

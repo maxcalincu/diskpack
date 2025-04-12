@@ -6,25 +6,26 @@ namespace CDP {
     class RadiiRegion {
         std::vector<Interval> intervals;
     public:
+        
+        RadiiRegion(const std::vector<Interval> &intervals_);
+        RadiiRegion(std::vector<Interval> &&intervals_);
+        
         const std::vector<Interval>& GetIntervals() const;
-        void Split(std::vector<RadiiRegion> &regions, int k = 2) const;
-        bool IsSmallEnough(BaseType lower_bound) const;
-        bool IsTooBig(BaseType upper_bound) const;
-        RadiiRegion(std::vector<Interval> radii_);
+        
+        bool IsNarrowEnough(BaseType lower_bound) const;
+        bool IsTooWide(BaseType upper_bound) const;
+        Interval GetMinInterval() const;
+        Interval GetMaxInterval() const;
+
+        void Split(std::vector<RadiiRegion> &regions, size_t k = 2, size_t index = -1) const;
+        void GridSplit(std::vector<RadiiRegion> &regions, size_t k, size_t index = 0) const;
     };
-
-    // template <typename Checker>                                      /// i am reluctant to swtich to C++20
-    // concept HasInspectMethod = requires(Checker c, RadiiRegion r) {
-    //     {c.Inspect(r)} -> std::same_as<bool>;
-    // };
-
-    using RadiiList = std::list<RadiiRegion>;
     
     class CoronaChecker: private BasicGenerator {
     protected:    
-        bool SatisfiesConstraints() const;
-        bool IsInBounds(const Disk *disk) const;
-        bool IsLargeEnough() const;
+        bool SatisfiesConstraints() const override;
+        bool IsInBounds(const Disk *disk) const override;
+        bool IsLargeEnough() const override;
     public:
         bool Inspect(const RadiiRegion &radii_);
         const std::list<Disk> &GetPacking();
@@ -32,9 +33,9 @@ namespace CDP {
     };
     class BasicChecker {
     protected:
-    const BaseType packing_radius;
-    const BaseType precision_upper_bound;
-    const size_t size_upper_bound;
+    const BaseType checker_packing_radius;
+    const BaseType checker_precision_upper_bound;
+    const size_t checker_size_upper_bound;
 
     public:
         bool Inspect(const RadiiRegion &radii_);

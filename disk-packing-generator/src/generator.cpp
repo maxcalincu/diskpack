@@ -1,3 +1,4 @@
+#include "diskpack/corona.h"
 #include <diskpack/generator.h>
 #include <../generated/cw.pb.h>
 #include <fstream>
@@ -57,6 +58,7 @@ bool BasicGenerator::IsInBounds(const Disk *disk) const {
 }
 
 void BasicGenerator::SetGeneratedRadius(const Disk &furthest_disk) {
+  auto x = sqrt(furthest_disk.get_norm()) + furthest_disk.get_radius();
   generated_radius =
       median(sqrt(furthest_disk.get_norm()) + furthest_disk.get_radius());
 }
@@ -212,5 +214,11 @@ PackingStatus BasicGenerator::Resume() {
 const std::list<Disk> &BasicGenerator::GetPacking() { return packing; }
 const BaseType &BasicGenerator::GetRadius() { return packing_radius; }
 const BaseType &BasicGenerator::GetGeneratedRadius() { return generated_radius; }
+void BasicGenerator::SetRadii(const std::vector<Interval> radii_) {
+  Reset();
+  radii = radii_;
+  lookup_table = std::move(OperatorLookupTable(radii_));
+  frequency_table.resize(radii.size(), 0);
+}
 
 } // namespace CDP

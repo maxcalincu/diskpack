@@ -18,7 +18,7 @@ using SSORef = std::reference_wrapper<SpiralSimilarityOperator>;
     inline size_t GetIndex(size_t i, size_t j, size_t k);
   
   public:
-    const std::vector<Interval> &radii;
+    std::vector<Interval> radii;
     SSORef operator()(size_t base_type, size_t prev_type, size_t next_type);
     SSORef operator()();
     OperatorLookupTable(const std::vector<Interval> &radii_);

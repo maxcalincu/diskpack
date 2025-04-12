@@ -27,7 +27,7 @@ $ git pull origin master
 The visualizer generates a compact disk packings with some radii set from a given region. To use it, run the following commands from ``build`` directory:
 ```bash
 $ make visualizer
-$ ./visualization-tool/visualizer --help
+$ ./visualizer --help
 ```
 
 This will display a detailed description of the command-line interface. To generate an image with the packing, use ``visualization-tool/notebook.ipynb``
@@ -37,7 +37,7 @@ The finder identifies all of the small subregions within a given region which co
 
 ```bash
 $ make finder
-$ ./configuration-finder/finder
+$ ./finder
 ```
 
 Note: A command-line interface is not yet available, and additional features are still in development.

@@ -47,17 +47,17 @@ protected:
   void Pop(size_t index);                     /// Pops the disk from the packing and updates the
                                               /// state of the class. The order is LIFO
 
-  bool IsInBounds(const Disk *disk) const;                  /// Determines whether the disk is
-                                                            /// entirely inside the desired region
   bool HasIntersection(const Disk &new_disk) const;         /// Determines whether new_disk (certainly) intersects any other
                                                             /// disk from the packing
 
   void SetGeneratedRadius(const Disk &furthest_disk);
   void ShuffleIndexes(std::vector<size_t> &shuffle) const;  
-  bool SatisfiesConstraints() const;                        /// Assumptions emposed on the packing are checked. This function is called at the
+  virtual bool SatisfiesConstraints() const;                /// Assumptions emposed on the packing are checked. This function is called at the
                                                             /// end of a successful generation attempt
-  bool IsLargeEnough() const;                               /// Packing size upper bound checker
+  virtual bool IsLargeEnough() const;                       /// Packing size upper bound checker
 
+  virtual bool IsInBounds(const Disk *disk) const;          /// Determines whether the disk is
+                                                            /// entirely inside the desired region
   PackingStatus AdvancePacking();                           /// Recursive function which picks a disk from the queue and
                                                             /// fills it's corona using GapFill.
 public:
@@ -81,6 +81,7 @@ public:
   const BaseType &GetRadius();                                /// Dumps the packing to a storage once it's completed
   const std::list<Disk> &GetPacking();                        /// Getter function for the generated packing
   void Reset();                                               /// Resets the state
+  void SetRadii(const std::vector<Interval> radii_);
 };
 
 } // namespace CDP
