@@ -2,6 +2,8 @@
 
 namespace diskpack {
 
+const size_t DEFAULT_OPERATORS_SIZE = 12;
+
 SpiralSimilarityOperator
 Corona::GetOperatorsProduct(const size_t &begin, const size_t &end,
                             const std::vector<SSORef> &operators) const {
@@ -36,11 +38,11 @@ bool Corona::IsCompleted() const {
           cergt(cross_product, 0.0L));
 }
 
-void Corona::GetSortedCorona(const std::list<Disk> &packing) {
+void Corona::GetSortedCorona(const std::list<DiskPointer> &packing) {
   assert(corona.empty());
   for (auto &disk : packing) {
-    if (base.tangent(disk)) {
-      corona.push_back(&disk);
+    if (base.tangent(*disk)) {
+      corona.push_back(disk);
     }
   }
   std::sort(corona.begin(), corona.end(), DiskClockwiseCompare{base});
@@ -61,11 +63,11 @@ bool Corona::IsContinuous() const {
   return true;
 }
 
-Corona::Corona(const Disk &b, const std::list<Disk> &packing,
+Corona::Corona(const Disk &b, const std::list<DiskPointer> &packing,
                OperatorLookupTable &lookup_table_)
     : base(b), lookup_table(lookup_table_) {
-  operators_back.reserve(12);
-  operators_front.reserve(12);
+  operators_back.reserve(DEFAULT_OPERATORS_SIZE);
+  operators_front.reserve(DEFAULT_OPERATORS_SIZE);
 
   GetSortedCorona(packing);
   assert(!corona.empty());
@@ -97,7 +99,7 @@ void Corona::PeekNewDisk(Disk &new_disk, size_t index) {
                   lookup_table.radii[index], index);
   operators.pop_back();
 }
-void Corona::Push(Disk *disk, size_t index) {
+void Corona::Push(DiskPointer disk, size_t index) {
   bool use_front = corona.front()->precision() < corona.back()->precision();
   push_history.push(use_front);
   auto &operators = (use_front) ? operators_front : operators_back;
@@ -122,7 +124,7 @@ DiskClockwiseCompare::DiskClockwiseCompare(const Disk &base) {
   center_x = base.get_center_x();
   center_y = base.get_center_y();
 }
-bool DiskClockwiseCompare::operator()(const Disk *a, const Disk *b) const {
+bool DiskClockwiseCompare::operator()(const DiskPointer a, const DiskPointer b) const {
   auto ax = a->get_center_x() - center_x;
   auto ay = a->get_center_y() - center_y;
   auto bx = b->get_center_x() - center_x;

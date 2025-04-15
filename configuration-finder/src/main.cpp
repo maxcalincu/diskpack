@@ -6,7 +6,7 @@
 #include <thread>
 
 
-using namespace CDP;
+using namespace diskpack;
 
 const size_t DEFAULT_SIZE_UPPER_BOUND = 100;
 const BaseType DEFAULT_PACKING_RADIUS = 6;

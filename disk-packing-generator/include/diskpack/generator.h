@@ -17,7 +17,7 @@ enum PackingStatus {
                     /// too big)
 };
 
-using QueueType = std::multiset<Disk *, decltype(&LessNormCompare)>;    /// Priority queue which supports
+using QueueType = std::multiset<DiskPointer, decltype(&LessNormCompare)>;    /// Priority queue which supports
                                                                         /// insertion, exctraction on
                                                                         /// key. Yields disks which are
                                                                         /// closer to the (0, 0)
@@ -33,10 +33,10 @@ protected:
   const BaseType precision_upper_bound;       /// Upper bound for disks' interval width
   BaseType packing_radius;                    /// Determines the size of the generated packing
   size_t size_upper_bound;                    /// Upper bound on the number of disks in the packing
-  std::list<Disk> packing;                    /// Current state of the packing
+  std::list<DiskPointer> packing;                    /// Current state of the packing
   QueueType disk_queue;                       /// Queue of disks managed by PackingGenerator::Advance()
   OperatorLookupTable lookup_table;           /// Tool for efficient disk center computing
-  std::vector<int> frequency_table;           /// Used to keep track of disks
+  std::vector<size_t> frequency_table;           /// Used to keep track of disks
   BaseType generated_radius;                  /// The radius of the circle which is covered
                                               /// by the generated packing
 
@@ -59,7 +59,7 @@ protected:
   bool HasIntersection(const Disk &new_disk) const;         /// Determines whether new_disk (certainly) intersects any other
                                                             /// disk from the packing
 
-  virtual bool IsInBounds(const Disk *disk) const;          /// Determines whether the disk is
+  virtual bool IsInBounds(const Disk &disk) const;          /// Determines whether the disk is
                                                             /// entirely inside the desired region
   virtual bool PackingSatisfiesConstraints() const;         /// Assumptions emposed on the packing are checked.
 
@@ -72,7 +72,7 @@ public:
                    const BaseType &precision_upper_bound_,
                    const size_t &size_upper_bound_);
 
-  PackingStatus Generate(const size_t &central_disk_type = 0);/// Starts the generation proccess
+  PackingStatus Generate(const size_t &central_disk_type);    /// Starts the generation proccess
                                                               /// Use Generate() to generate a packing from scratch
 
   void Reset();                                               /// Resets the state
@@ -82,14 +82,14 @@ public:
   void SetPackingRadius(const BaseType &new_packing_radius);  /// Set a new value to the desired packing radius
 
   void SetSizeUpperBound(const size_t &new_size);             /// Set a new value to the desired packing size
-  void SetRadii(const std::vector<Interval> radii_);
+  void SetRadii(const std::vector<Interval> &radii_);
 
   const BaseType &GetGeneratedRadius();                       /// Returns the radius of the generated packing
                                                               /// (which could be less than packing_radius iff
                                                               /// Generate() returns anything other than
                                                               /// PackingStatus::complete)
   const BaseType &GetRadius();                                /// Dumps the packing to a storage once it's completed
-  const std::list<Disk> &GetPacking();                        /// Getter function for the generated packing
+  const std::list<DiskPointer> &GetPacking();                 /// Getter function for the generated packing
 
 };
 

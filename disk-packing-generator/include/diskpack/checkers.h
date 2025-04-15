@@ -24,11 +24,11 @@ namespace diskpack {
     class CoronaChecker: private BasicGenerator {
     protected:    
         bool PackingSatisfiesConstraints() const override;
-        bool IsInBounds(const Disk *disk) const override;
+        bool IsInBounds(const Disk &disk) const override;
         bool PackingIsLargeEnough() const override;
     public:
         bool Inspect(const RadiiRegion &radii_);
-        const std::list<Disk> &GetPacking();
+        const std::list<DiskPointer> &GetPacking();
         CoronaChecker(const BaseType &precision_upper_bound_);
     };
     class BasicChecker {

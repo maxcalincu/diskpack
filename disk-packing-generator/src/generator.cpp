@@ -65,14 +65,18 @@ namespace diskpack {
 
   /// Main recursive functions
   PackingStatus BasicGenerator::AdvancePacking() {
-    Disk *base = nullptr;
     if (disk_queue.empty()) {
       return PackingStatus::invalid;
     }
     
-    base = disk_queue.extract(disk_queue.begin()).value();
-  
-    if (!IsInBounds(base) || PackingIsLargeEnough()) {
+    auto base = disk_queue.extract(disk_queue.begin()).value();
+    
+    if (base->precision() > precision_upper_bound) {
+      SetGeneratedRadius(*base);
+      return PackingStatus::precision_error;
+    }
+
+    if (!IsInBounds(*base) || PackingIsLargeEnough()) {
       disk_queue.insert(base);
       if (!PackingSatisfiesConstraints()) {
         return PackingStatus::invalid;
@@ -108,17 +112,12 @@ namespace diskpack {
     for (size_t i = 0; i < radii.size(); ++i) {
       corona.PeekNewDisk(new_disk, shuffle[i]);
   
-      if (new_disk.precision() > precision_upper_bound) {
-        SetGeneratedRadius(corona.GetBase());
-        return PackingStatus::precision_error;
-      }
-  
       if (HasIntersection(new_disk)) {
         continue;
       }
   
       Push(std::move(new_disk), shuffle[i]);
-      corona.Push(&packing.back(), shuffle[i]);
+      corona.Push(packing.back(), shuffle[i]);
   
       auto status = GapFill(corona);
       if (status != PackingStatus::invalid) {
@@ -148,14 +147,14 @@ namespace diskpack {
   /// Packing stack modifiers
 
   void BasicGenerator::Push(Disk &&new_disk, size_t index) {
-    packing.push_back(std::move(new_disk));
-    disk_queue.insert(&packing.back());
+    packing.push_back(std::make_shared<Disk>(std::move(new_disk)));
+    disk_queue.insert(packing.back());
     ++frequency_table[index];
   }
   
   void BasicGenerator::Pop(size_t index) {
     --frequency_table[index];
-    disk_queue.erase(&packing.back());
+    disk_queue.erase(packing.back());
     packing.pop_back();
   }
 
@@ -164,14 +163,12 @@ namespace diskpack {
   bool BasicGenerator::HasIntersection(const Disk &new_disk) const {
     return std::any_of(
         packing.begin(), packing.end(),
-        [&new_disk](const Disk &disk) { return new_disk.intersects(disk); });
+        [&new_disk](const DiskPointer &disk) { return new_disk.intersects(*disk); });
   }
 
-  bool BasicGenerator::IsInBounds(const Disk *disk) const {
-    return disk == nullptr ? false
-                          : cerle(disk->get_norm(),
-                                  (packing_radius - disk->get_radius()) *
-                                      (packing_radius - disk->get_radius()));
+  bool BasicGenerator::IsInBounds(const Disk &disk) const {
+    return  cerle(disk.get_norm(),(packing_radius - disk.get_radius()) *
+                                        (packing_radius - disk.get_radius()));
   }
 
   bool BasicGenerator::PackingSatisfiesConstraints() const {
@@ -190,7 +187,7 @@ void BasicGenerator::SetGeneratedRadius(const Disk &furthest_disk) {
       median(sqrt(furthest_disk.get_norm()) + furthest_disk.get_radius());
 }
 
-void BasicGenerator::SetRadii(const std::vector<Interval> radii_) {
+void BasicGenerator::SetRadii(const std::vector<Interval> &radii_) {
   Reset();
   radii = radii_;
   lookup_table = std::move(OperatorLookupTable(radii_));
@@ -206,7 +203,7 @@ void BasicGenerator::SetSizeUpperBound(const size_t &new_size) {
 
 //Getters
 
-const std::list<Disk> &BasicGenerator::GetPacking() { return packing; }
+const std::list<DiskPointer> &BasicGenerator::GetPacking() { return packing; }
 const BaseType &BasicGenerator::GetRadius() { return packing_radius; }
 const BaseType &BasicGenerator::GetGeneratedRadius() { return generated_radius; }
 

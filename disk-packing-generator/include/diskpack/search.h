@@ -1,7 +1,6 @@
 #include <atomic>
 #include <diskpack/checkers.h>
 #include <thread>
-#include <iostream>
 
 #pragma once
 
@@ -25,9 +24,7 @@ namespace diskpack {
     template <typename Checker>
     // template <HasInspectMethod Checker>
     Searcher<Checker>::Searcher(std::vector<RadiiRegion> &results_, Checker c_, BaseType lower_bound_, BaseType upper_bound_): results{results_}, c{c_},
-                                                                                                                upper_bound(upper_bound_), lower_bound(lower_bound_) {
-                                                                                                                    std::cerr << results.size() << " SIZE\n";
-                                                                                                                };
+                                                                                                                upper_bound(upper_bound_), lower_bound(lower_bound_) {};
     
     template <typename Checker>
     // template <HasInspectMethod Checker>
@@ -84,6 +81,5 @@ namespace diskpack {
         for (auto &r : thread_results) {
             results.insert(results.end(), r.begin(), r.end());
         }
-        // ProcessRegion(region, results);
     }
 }

@@ -75,7 +75,7 @@ namespace diskpack {
         return *std::max_element(frequency_table.begin(), frequency_table.end()) != packing.size();
       };
       
-      bool CoronaChecker::IsInBounds(const Disk *disk) const {
+      bool CoronaChecker::IsInBounds(const Disk &disk) const {
         return true;
       }
 
@@ -124,7 +124,7 @@ namespace diskpack {
         }
         auto basic_generator = BasicGenerator{radii_.GetIntervals(), checker_packing_radius, checker_precision_upper_bound, checker_size_upper_bound};
         for (size_t i = 0; i < radii_.GetIntervals().size(); ++i) {
-          auto status = basic_generator.Generate(0);
+          auto status = basic_generator.Generate(i);
           if (status == PackingStatus::invalid) {
             return false;
           }

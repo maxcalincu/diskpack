@@ -1,4 +1,5 @@
 #include <boost/numeric/interval.hpp>
+#include <memory>
 #pragma once
 
 namespace diskpack {
@@ -43,8 +44,6 @@ struct SpiralSimilarityOperator {
   SpiralSimilarityOperator();
 };
 
-#define INSPECT(expr) std::cout << #expr << ": " << (expr) << "\n";
-
 /// Disk class
 class Disk {
   Interval center_x, center_y, radius;
@@ -69,5 +68,7 @@ public:
   bool disjoint(const Disk &other) const;
   BaseType precision() const;
 };
-bool LessNormCompare(const Disk *a, const Disk *b);
+using DiskPointer = std::shared_ptr<Disk>;
+bool LessNormCompare(const DiskPointer a, const DiskPointer b);
+
 } // namespace CDP

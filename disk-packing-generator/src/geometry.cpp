@@ -18,6 +18,7 @@ SpiralSimilarityOperator::SpiralSimilarityOperator(
   const auto &b_r = base_r, &p_r = prev_r, &n_r = next_r;
   const auto &b_t = base_t, &p_t = prev_t, &n_t = next_t;
 
+  // x = ((square(n_r + p_r) - square(n_r + p_r))/square(n_r + b_r) + one)/2.0L;
   x = (p_t == b_t
            ? one / 2.0L
            : (b_t == n_t
@@ -26,11 +27,6 @@ SpiralSimilarityOperator::SpiralSimilarityOperator(
                                 : one / (one + p_r / b_r) +
                                       n_r * (one - p_r / b_r) /
                                           (b_r * square(one + p_r / b_r)))));
-
-  // x = ((square(n_r + p_r) - square(n_r + p_r))/square(n_r + b_r) + one)/2.0L;
-
-  //   (p^2 + np - nb + pb) / (p + b)^2
-  //   p_r/(p_r + b_r) + n_r(p_r - b_r)/(p_r + b_r)^2
 
   // y = 2.0L * sqrt(n_r * b_r * p_r * (n_r + b_r + p_r))/square(b_r + n_r);
   auto t = n_r / (b_r + p_r);
@@ -41,8 +37,7 @@ SpiralSimilarityOperator::SpiralSimilarityOperator(
                                        (one * 2.0L + p_r / b_r + b_r / p_r))));
 }
 
-IntervalPair
-SpiralSimilarityOperator::operator*(const IntervalPair &vec) const noexcept {
+IntervalPair SpiralSimilarityOperator::operator*(const IntervalPair &vec) const noexcept {
   return IntervalPair{vec.first * x - vec.second * y,
                       vec.second * x + vec.first * y};
 }
@@ -52,14 +47,12 @@ SpiralSimilarityOperator SpiralSimilarityOperator::operator*(
                                   other.y * x + other.x * y};
 }
 
-SpiralSimilarityOperator &
-SpiralSimilarityOperator::operator=(const SpiralSimilarityOperator &other) {
+SpiralSimilarityOperator &SpiralSimilarityOperator::operator=(const SpiralSimilarityOperator &other) {
   x = other.x;
   y = other.y;
   return *this;
 }
-SpiralSimilarityOperator &
-SpiralSimilarityOperator::operator=(SpiralSimilarityOperator &&other) {
+SpiralSimilarityOperator &SpiralSimilarityOperator::operator=(SpiralSimilarityOperator &&other) {
   x = std::move(other.x);
   y = std::move(other.y);
   return *this;
@@ -121,7 +114,7 @@ bool Disk::disjoint(const Disk &other) const {
   return cergt(gap_between_disks(*this, other), 0.0L);
 }
 
-bool LessNormCompare(const Disk *a, const Disk *b) {
+bool LessNormCompare(const DiskPointer a, const DiskPointer b) {
   return median(sqrt(a->get_norm()) + a->get_radius()) <
          median(sqrt(b->get_norm()) + b->get_radius());
 }
