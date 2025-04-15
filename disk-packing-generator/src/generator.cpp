@@ -5,7 +5,7 @@
 
 std::random_device rd;
 
-namespace CDP {
+namespace diskpack {
   BasicGenerator::BasicGenerator(const std::vector<Interval> &radii_,
                                      const BaseType &packing_radius_,
                                      const BaseType &precision_upper_bound_,

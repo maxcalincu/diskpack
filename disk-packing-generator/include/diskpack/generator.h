@@ -4,7 +4,7 @@
 
 #pragma once
 
-namespace CDP {
+namespace diskpack {
 
 /// Status of generation process
 enum PackingStatus {

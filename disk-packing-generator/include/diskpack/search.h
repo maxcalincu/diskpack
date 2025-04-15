@@ -5,7 +5,7 @@
 
 #pragma once
 
-namespace CDP {
+namespace diskpack {
 
     template <typename Checker>
     // template <HasInspectMethod Checker>

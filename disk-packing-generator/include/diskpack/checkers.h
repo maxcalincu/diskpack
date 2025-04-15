@@ -2,7 +2,7 @@
 
 #pragma once
 
-namespace CDP {
+namespace diskpack {
     class RadiiRegion {
         std::vector<Interval> intervals;
     public:

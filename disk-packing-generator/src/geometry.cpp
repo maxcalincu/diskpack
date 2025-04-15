@@ -1,7 +1,6 @@
 #include <diskpack/geometry.h>
 
-
-namespace CDP {
+namespace diskpack {
 SpiralSimilarityOperator::SpiralSimilarityOperator(const Interval &x_,
                                                    const Interval &y_)
     : x{x_}, y{y_} {}

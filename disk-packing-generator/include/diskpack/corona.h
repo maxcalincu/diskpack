@@ -5,7 +5,7 @@
 
 #pragma once
 
-namespace CDP {
+namespace diskpack {
 using SSORef = std::reference_wrapper<SpiralSimilarityOperator>;
   /// Lookup table with spiral similarity operators. Since there at most
   /// radii.size()^3 different triplets of radii (therefore at most radii.size()^3

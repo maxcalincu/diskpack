@@ -12,7 +12,7 @@ using std::chrono::duration_cast;
 using std::chrono::high_resolution_clock;
 using std::chrono::milliseconds;
 
-using namespace CDP;
+using namespace diskpack;
 namespace po = boost::program_options;
 
 const size_t DEFAULT_SIZE_UPPER_BOUND = 200;

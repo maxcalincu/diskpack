@@ -1,7 +1,7 @@
 #include <boost/numeric/interval.hpp>
 #pragma once
 
-namespace CDP {
+namespace diskpack {
 
 using namespace boost::numeric;
 

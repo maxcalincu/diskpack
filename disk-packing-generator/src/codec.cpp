@@ -2,7 +2,6 @@
 #include <fstream>
 #include <vector>
 #include <iostream>
-// #include <../generated/cw.pb.h>
 
 const std::vector<std::string> type_to_color = {
     "#ff8080a0",
@@ -12,7 +11,7 @@ const std::vector<std::string> type_to_color = {
     "#000000a0",
 };
 
-namespace CDP {
+namespace diskpack {
     // void WritePackingPROTO(const std::string &filename,
     //                 const std::list<Disk> &packing, BaseType packing_radius) {
     //     ProtoPacking storage_packing;

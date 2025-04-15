@@ -1,7 +1,6 @@
 #include <diskpack/corona.h>
-#include <vector>
 
-namespace CDP {
+namespace diskpack {
 
 SpiralSimilarityOperator
 Corona::GetOperatorsProduct(const size_t &begin, const size_t &end,

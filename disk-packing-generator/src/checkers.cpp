@@ -3,7 +3,7 @@
 #include <boost/numeric/interval/utility_fwd.hpp>
 #include <diskpack/checkers.h>
 
-namespace CDP {
+namespace diskpack {
 /// RadiiRegion
     void RadiiRegion::Split(std::vector<RadiiRegion> &regions, size_t k, size_t index) const {
         regions.clear();
