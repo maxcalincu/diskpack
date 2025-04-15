@@ -30,7 +30,7 @@ $ make visualizer
 $ ./visualizer --help
 ```
 
-This will display a detailed description of the command-line interface. To generate an image with the packing, use ``visualization-tool/notebook.ipynb``
+This will display a detailed description of the command-line interface. ``svg`` images of the generated packing are located in ``images`` folder.
 
 ## finder
 The finder identifies all of the small subregions within a given region which contain a radii set that allows a compact disk packing. To use it, run these commands from ``build`` directory:

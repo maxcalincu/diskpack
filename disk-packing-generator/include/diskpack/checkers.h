@@ -23,9 +23,9 @@ namespace CDP {
     
     class CoronaChecker: private BasicGenerator {
     protected:    
-        bool SatisfiesConstraints() const override;
+        bool PackingSatisfiesConstraints() const override;
         bool IsInBounds(const Disk *disk) const override;
-        bool IsLargeEnough() const override;
+        bool PackingIsLargeEnough() const override;
     public:
         bool Inspect(const RadiiRegion &radii_);
         const std::list<Disk> &GetPacking();

@@ -1,7 +1,8 @@
-#include <algorithm>
 #include <diskpack/constants.h>
 #include <diskpack/generator.h>
+#include <diskpack/codec.h>
 
+#include <algorithm>
 #include <boost/program_options.hpp>
 #include <chrono>
 #include <iostream>
@@ -17,7 +18,7 @@ namespace po = boost::program_options;
 const size_t DEFAULT_SIZE_UPPER_BOUND = 200;
 const BaseType DEFAULT_PACKING_RADIUS = 5;
 const BaseType DEFAULT_PRECISION_UPPER_BOUND = 0.5;
-const std::string DEFAULT_OUTPUT_FILE = "../storage/default.txt";
+const std::string DEFAULT_OUTPUT_FILE = "../images/default.svg";
 
 std::vector<Interval> radii = {
   {0.3989583333, 0.399375},
@@ -30,7 +31,7 @@ std::vector<Interval> radii = {
 
 
 int main(int argc, char *argv[]) {
-  bool measure_duration = false, use_custom_values = false;
+  bool use_custom_values = false;
   size_t size_upper_bound;
   size_t central_disk_type;
   BaseType packing_radius;
@@ -44,11 +45,9 @@ int main(int argc, char *argv[]) {
 
         ("region-size,r", po::value<BaseType>()->default_value(DEFAULT_PACKING_RADIUS), "Sets an upper limit on the region size. Only a circular region of the plane with a given radius (provided by this flag) will be covered with disks\n")
         ("number-of-disks,n", po::value<size_t>()->default_value(DEFAULT_SIZE_UPPER_BOUND), "Sets an upper limit on the number of disks the packing contains\n")
-        ("output,o", po::value<std::string>()->default_value(DEFAULT_OUTPUT_FILE), "Output file to store the generated packing\n")
+        ("output,o", po::value<std::string>()->default_value(DEFAULT_OUTPUT_FILE), ".svg file to store the generated packing\n")
         
         ("precision,p", po::value<BaseType>()->default_value(DEFAULT_PRECISION_UPPER_BOUND), "Sets an upper limit on the precision of the disk coordinates\n")
-
-        ("measure-duration,d", "Outputs the duration of the Generate() call\n")
 
         ("central-disk,c", po::value<size_t>()->default_value(1), "Sets the central disk's type (0 <= i < radii.size()) where i is the index of the corresponding radius in the set. By default the radii are sorted in decreasing order\n")
 
@@ -69,9 +68,9 @@ int main(int argc, char *argv[]) {
               std::cout << "Usage of " << argv[0] << "\n";
               std::cout << desc << "\n";
               std::cout << "Examples of usage:\n";
-              std::cout << argv[0] << " -d -p 0.2 -n 200 --i3 53 -r 15\n\n";
+              std::cout << argv[0] << " -p 0.2 -n 200 --i3 53 -r 15\n\n";
               std::cout << "\
-The visualizer generates a compact disk packings with some radii set from a given region. To generate an image with the packing, use visualization-tool/notebook.ipynb\n\
+The visualizer generates a compact disk packings with some radii set from a given region. svg images of the generated packing are located in images folder.\n\
 The exection ends with one of the following statuses: 'complete', 'invalid', 'precision_error' and 'corona_error'\n\
 \n\
 'complete' status means that a packing was succesfully generated.\n\
@@ -87,10 +86,6 @@ The generated packing is stored in an output file (see --output flag). The outpu
               return 0;
         }
         po::notify(vm);
-
-        if (vm.count("measure-duration")) {
-          measure_duration = true;
-        }
 
         size_upper_bound = vm["number-of-disks"].as<size_t>();
         precision_upper_bound = vm["precision"].as<BaseType>();
@@ -138,15 +133,14 @@ The generated packing is stored in an output file (see --output flag). The outpu
 
   auto t1 = high_resolution_clock::now();
   auto status = generator.Generate(central_disk_type);
-  std::cout << status << "\n";
   auto t2 = high_resolution_clock::now();
+  auto ms_int = duration_cast<milliseconds>(t2 - t1);
+  
+  std::cout << "status:  \t" << status << "\n";
+  std::cout << "duration:\t" << ms_int.count() << "ms\n";
 
-  if (measure_duration) {
-    auto ms_int = duration_cast<milliseconds>(t2 - t1);
-    std::cout << ms_int.count() << "ms\n";
-  }
   if (status != PackingStatus::invalid) {
-    DumpPacking(output_file, generator.GetPacking(), generator.GetGeneratedRadius() + 1);
+    WritePackingSVG(output_file, generator.GetPacking(), generator.GetGeneratedRadius() + 1);
   }
 
   return 0;

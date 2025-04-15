@@ -2,7 +2,6 @@
 #include <algorithm>
 #include <boost/numeric/interval/utility_fwd.hpp>
 #include <diskpack/checkers.h>
-// #include <iostream>
 
 namespace CDP {
 /// RadiiRegion
@@ -72,7 +71,7 @@ namespace CDP {
       return intervals.back();
     }
   /// CoronaChecker
-    bool CoronaChecker::SatisfiesConstraints() const {
+    bool CoronaChecker::PackingSatisfiesConstraints() const {
         return *std::max_element(frequency_table.begin(), frequency_table.end()) != packing.size();
       };
       
@@ -80,7 +79,7 @@ namespace CDP {
         return true;
       }
 
-      bool CoronaChecker::IsLargeEnough() const {
+      bool CoronaChecker::PackingIsLargeEnough() const {
         return packing.size() > 3;
       }
       

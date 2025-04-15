@@ -5,9 +5,11 @@ draft.txt
 .vscode
 .cache
 
-visualization-tool/images/*.png
+*.png
 visualization-tool/src/__pycache__
 _deps
 *.yaml
 *.json
 *.ipynb
+*.svg
+dumpster
