@@ -1,21 +1,25 @@
-#include "diskpack/checkers.h"
 #include <diskpack/search.h>
+#include <boost/program_options.hpp>
 #include <iomanip>
 #include <iostream>
-#include <chrono>
-#include <thread>
-
 
 using namespace diskpack;
+namespace po = boost::program_options;
 
 const size_t DEFAULT_SIZE_UPPER_BOUND = 100;
 const BaseType DEFAULT_PACKING_RADIUS = 6;
 const BaseType DEFAULT_PRECISION_UPPER_BOUND = 0.2;
+const BaseType DEFAULT_LOWER_BOUND = 0.00001;
+const BaseType DEFAULT_UPPER_BOUND = 0.01;
 
-int main() {
+int main(int argc, char *argv[]) {
     using std::chrono::duration_cast;
     using std::chrono::high_resolution_clock;
     using std::chrono::milliseconds;
+
+    size_t size_upper_bound;
+    BaseType precision_upper_bound, packing_radius, lower_bound, upper_bound;
+
     RadiiRegion region{std::vector<Interval> {
         // Interval{0.46, 0.48},
         // Interval{0.822, 0.827},
@@ -26,23 +30,78 @@ int main() {
         // {0.2, 0.9},
         {0.713, 0.714},
         {0.627, 0.628},
-        {0.556, 0.557},
+        {0.555, 0.556},
         one, 
     }};
-    BasicChecker checker{DEFAULT_PACKING_RADIUS, DEFAULT_PRECISION_UPPER_BOUND, DEFAULT_SIZE_UPPER_BOUND};
+
+    try {
+        po::options_description desc("Allowed options");
+        desc.add_options()
+            ("help,h", "Show this help message\n")
+    
+            ("region-size,r", po::value<BaseType>()->default_value(DEFAULT_PACKING_RADIUS), "Sets an upper limit on the region size. Only a circular region of the plane with a given radius (provided by this flag) will be covered with disks\n")
+            ("number-of-disks,n", po::value<size_t>()->default_value(DEFAULT_SIZE_UPPER_BOUND), "Sets an upper limit on the number of disks the packing contains\n")
+                 
+            ("precision,p", po::value<BaseType>()->default_value(DEFAULT_PRECISION_UPPER_BOUND), "Sets an upper limit on the precision of the disk coordinates\n")
+            ("lower-bound,l", po::value<BaseType>()->default_value(DEFAULT_LOWER_BOUND), "Region width lower bound for viability check in the search")
+            ("upper-bound,u", po::value<BaseType>()->default_value(DEFAULT_UPPER_BOUND), "Region width upper bound for viability check in the search")
+        ;
+    
+            po::positional_options_description p;
+    
+            po::variables_map vm;
+            po::store(po::command_line_parser(argc, argv)
+                .options(desc)
+                .positional(p)
+                .run(), vm);
+    
+            if (vm.count("help")) {
+                  std::cout << "Usage of " << argv[0] << "\n";
+                  std::cout << std::setprecision(7) << desc << "\n";
+                  std::cout << "Examples of usage:\n";
+                  std::cout << argv[0] << " -p 0.2 -n 200 -r 15 -l 0.001 -u 0.1\n\n";
+                  std::cout << "\
+The finder identifies all of the small subregions within a given region which contain a radii set that allows a compact disk packing. \n\
+Use -n and -r flags to set an upper limit on the number of disks and the size of the region covered respectively in viability checks.\n\
+Use -p flag to set an upper bound on the interval precision during viability checks\n\
+All regions with a smaller width than the lower_bound added to the results. All regions with a bigger width that the upper_bound are not checked for viability (use -u and -l flags to set them)\n\
+\n\
+The results are outputed in std::cerr\n";
+    
+                  return 0;
+            }
+            po::notify(vm);
+    
+            size_upper_bound = vm["number-of-disks"].as<size_t>();
+            precision_upper_bound = vm["precision"].as<BaseType>();
+            packing_radius = vm["region-size"].as<BaseType>();
+            lower_bound = vm["lower-bound"].as<BaseType>();
+            upper_bound = vm["upper-bound"].as<BaseType>();
+
+            
+      } catch (const po::error& e) {
+        std::cerr << "Error: " << e.what() << "\n";
+        return 1;
+      } catch (const std::exception& e) {
+        std::cerr << "Unhandled exception: " << e.what() << "\n";
+        return 1;
+    }
+    
+
+    BasicChecker checker{packing_radius, precision_upper_bound, size_upper_bound};
     std::vector<RadiiRegion> results;
-    Searcher<BasicChecker> searcher{results, checker, 0.00001, 0.01};
+    Searcher<BasicChecker> searcher{results, checker, lower_bound, upper_bound};
    
-    std::cerr << std::thread::hardware_concurrency() << "\n";
+    std::cerr << "hardware concurrencry:\t" << std::thread::hardware_concurrency() << "\n";
    
     auto t1 = high_resolution_clock::now();    
     searcher.StartProcessing(region);
     auto t2 = high_resolution_clock::now();
   
     auto ms_int = duration_cast<milliseconds>(t2 - t1);
-    std::cout << ms_int.count()/1000 << "s\n";
+    std::cerr << "duration:             \t" << ms_int.count()/1000 << "s\n";
 
-    std::cout << results.size() << "\n";
+    std::cerr << "results size:         \t" << results.size() << "\n";
     std::vector<BaseType> a(region.GetIntervals().size()), A(region.GetIntervals().size());
     bool untouched = true;
     for (auto &x : results) {
@@ -63,7 +122,7 @@ int main() {
             A[i] = std::max(A[i], x.GetIntervals()[i].upper());
         }
     }
-    std::cerr << "\n";
+    std::cerr << "\nmin max: ";
     for (size_t i = 0; i < a.size(); ++i) {
         std::cerr << std::setprecision(10) << a[i] << " " << A[i] << " ";
     }

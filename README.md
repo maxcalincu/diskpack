@@ -26,6 +26,7 @@ $ git pull origin master
 ## visualizer
 The visualizer generates a compact disk packings with some radii set from a given region. To use it, run the following commands from ``build`` directory:
 ```bash
+$ cd build
 $ make visualizer
 $ ./visualizer --help
 ```
@@ -36,8 +37,9 @@ This will display a detailed description of the command-line interface. ``svg`` 
 The finder identifies all of the small subregions within a given region which contain a radii set that allows a compact disk packing. To use it, run these commands from ``build`` directory:
 
 ```bash
+$ cd build
 $ make finder
-$ ./finder
+$ ./finder --help
 ```
 
-Note: A command-line interface is not yet available, and additional features are still in development.
+This will display all currently available options.
