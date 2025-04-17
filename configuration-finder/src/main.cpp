@@ -1,16 +1,18 @@
 #include "diskpack/checkers.h"
+#include "diskpack/codec.h"
 #include <diskpack/search.h>
 #include <boost/program_options.hpp>
 #include <iomanip>
 #include <iostream>
+// #include <sstream>
 
 using namespace diskpack;
 namespace po = boost::program_options;
 
 const size_t DEFAULT_SIZE_UPPER_BOUND = 25;
-const BaseType DEFAULT_PACKING_RADIUS = 3;
+const BaseType DEFAULT_PACKING_RADIUS = 4;
 const BaseType DEFAULT_PRECISION_UPPER_BOUND = 0.2;
-const BaseType DEFAULT_LOWER_BOUND = 0.0001;
+const BaseType DEFAULT_LOWER_BOUND = 0.00001;
 const BaseType DEFAULT_UPPER_BOUND = 0.001;
 
 int main(int argc, char *argv[]) {
@@ -22,15 +24,15 @@ int main(int argc, char *argv[]) {
     BaseType precision_upper_bound, packing_radius, lower_bound, upper_bound;
 
     RadiiRegion region{std::vector<Interval> {
-        // Interval{0.46, 0.48},
-        // Interval{0.822, 0.827},
-        {0.4, 0.5},
-        {0.7, 0.8},
+        // {0.46, 0.48},
+        // {0.822, 0.827},
+        // {0.4, 0.5},
+        // {0.7, 0.8},
         // {0.86, 0.862}
         // {0.15, 0.9},
-        // {0.7133, 0.7134},
-        // {0.6274, 0.6275},
-        // {0.5562, 0.5563},
+        {0.713, 0.714},
+        {0.627, 0.628},
+        {0.556, 0.557},
         one, 
     }};
 
@@ -102,7 +104,10 @@ The results are outputed in std::cerr\n";
     std::cerr << "duration:             \t" << ms_int.count()/60'000 << "m " << (ms_int.count()/1000)%60 << "s\n";
 
     std::cerr << "results size:         \t" << results.size() << "\n";
-    bool untouched = true;
+    auto encoded = EncodeRegionsJSON(results);
+    std::cerr << encoded << "\n";
+    auto stream = std::stringstream(encoded);
+    DecodeRegionsJSON(stream, results);
     for (auto &x : results) {
         for (size_t i = 0; i < x.GetIntervals().size(); ++i) {
             std::cerr << std::setprecision(10) << x.GetIntervals()[i].lower() << " " << x.GetIntervals()[i].upper() << " ";

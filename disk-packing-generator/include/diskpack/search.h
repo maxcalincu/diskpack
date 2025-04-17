@@ -99,7 +99,7 @@ namespace diskpack {
         for (auto &r : thread_results) {
             results.insert(results.end(), r.begin(), r.end());
         }
-        std::cerr << results.size() << "\n";
+        std::cerr << "initial result size\t" << results.size() << "\n";
         DSUFilter filter{results};
         filter(results);
         std::sort(results.begin(), results.end(), [](const RadiiRegion &a, const RadiiRegion &b) {

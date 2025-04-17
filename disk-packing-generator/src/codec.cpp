@@ -1,7 +1,12 @@
+#include "diskpack/checkers.h"
 #include <diskpack/codec.h>
+#include <nlohmann/json.hpp>
 #include <fstream>
+#include <string>
 #include <vector>
 #include <iostream>
+
+using json = nlohmann::json;
 
 const std::vector<std::string> type_to_color = {
     "#ff8080a0",
@@ -45,5 +50,53 @@ namespace diskpack {
         
         svgFile.close();
         std::cerr << "SVG file created successfully: " << filename << std::endl;
+    }
+
+    std::string EncodeRegionsJSON(const std::vector<RadiiRegion>& regions) {
+        std::string result;
+        for (const auto& region : regions) {
+            json json_line = json::array();
+            for (const auto& interval : region.GetIntervals()) {
+                json_line.push_back(json::array({interval.lower(), interval.upper()}));
+            }
+            result += json_line.dump() + '\n';
+        }
+        return result;
+    }
+    
+    void DecodeRegionsJSON(std::istream& data, std::vector<RadiiRegion> &regions) {
+        regions.clear();
+        std::string region;
+
+        while (std::getline(data, region)) {
+            if (region.empty()) {
+                continue;
+            }
+
+            json json_line;
+            try {
+                json_line = json::parse(region);
+            } catch (const json::parse_error& e) {
+                throw std::runtime_error("JSON parse error: " + std::string(e.what()));
+            }
+
+            if (!json_line.is_array()) {
+                throw std::runtime_error("Each JSON line must be an array");
+            }
+
+            std::vector<Interval> current_line;
+            for (const auto& json_point : json_line) {
+                if (!json_point.is_array() || json_point.size() != 2) {
+                    throw std::runtime_error("Invalid point format - expected array of two numbers");
+                }
+
+                current_line.emplace_back(
+                    json_point[0].get<long double>(),
+                    json_point[1].get<long double>()
+                );
+            }
+
+            regions.emplace_back(current_line);
+        }
     }
 }

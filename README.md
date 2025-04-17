@@ -6,8 +6,7 @@ This project provides several tools for working with compact disk packings.
 ## Clone and build project
 To get started, run the following commands:
 ```bash
-$ sudo apt update
-$ sudo apt upgrade
+$ sudo apt-get install nlohmann-json3-dev
 $ sudo apt install libboost-all-dev
 $ git clone git@github.com:maxcalincu/diskpack.git
 $ cd diskpack
