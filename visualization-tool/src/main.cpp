@@ -21,9 +21,13 @@ const BaseType DEFAULT_PRECISION_UPPER_BOUND = 0.5;
 const std::string DEFAULT_OUTPUT_FILE = "../images/default.svg";
 
 std::vector<Interval> radii = {
-  {0.3989583333, 0.399375},
-  {0.46296875, 0.4635416667},
-  one,
+  // {0.3989583333, 0.399375},
+  // {0.46296875, 0.4635416667},
+  // one,
+  {0.7133, 0.7134},
+  {0.6274, 0.6275},
+  {0.5562, 0.5563},
+  one, 
 };
 
 // 0.4675 0.475 interval

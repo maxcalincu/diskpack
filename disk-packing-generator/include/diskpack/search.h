@@ -1,10 +1,28 @@
+#include <algorithm>
 #include <atomic>
 #include <diskpack/checkers.h>
+#include <iostream>
 #include <thread>
+#include <map>
 
 #pragma once
 
 namespace diskpack {
+    struct RadiiCompare {
+        bool operator()(const std::vector<Interval> &a, const std::vector<Interval> &b) const;
+    };
+
+    class DSUFilter {
+        std::vector<size_t> component_size;
+        std::vector<size_t> parent;
+        std::map<std::vector<Interval>, size_t, RadiiCompare> edges;
+        std::vector<std::vector<Interval>> vals;
+        size_t Get(size_t x);
+        void Unite(size_t x, size_t y);
+    public:
+        DSUFilter(const std::vector<RadiiRegion> &elements);
+        void operator()(std::vector<RadiiRegion> &results);
+    };
 
     template <typename Checker>
     // template <HasInspectMethod Checker>
@@ -81,5 +99,11 @@ namespace diskpack {
         for (auto &r : thread_results) {
             results.insert(results.end(), r.begin(), r.end());
         }
+        std::cerr << results.size() << "\n";
+        DSUFilter filter{results};
+        filter(results);
+        std::sort(results.begin(), results.end(), [](const RadiiRegion &a, const RadiiRegion &b) {
+            return RadiiCompare{}(a.GetIntervals(), b.GetIntervals());
+        });
     }
 }

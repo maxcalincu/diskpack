@@ -1,3 +1,4 @@
+#include "diskpack/checkers.h"
 #include <diskpack/search.h>
 #include <boost/program_options.hpp>
 #include <iomanip>
@@ -6,11 +7,11 @@
 using namespace diskpack;
 namespace po = boost::program_options;
 
-const size_t DEFAULT_SIZE_UPPER_BOUND = 100;
-const BaseType DEFAULT_PACKING_RADIUS = 6;
+const size_t DEFAULT_SIZE_UPPER_BOUND = 25;
+const BaseType DEFAULT_PACKING_RADIUS = 3;
 const BaseType DEFAULT_PRECISION_UPPER_BOUND = 0.2;
-const BaseType DEFAULT_LOWER_BOUND = 0.00001;
-const BaseType DEFAULT_UPPER_BOUND = 0.01;
+const BaseType DEFAULT_LOWER_BOUND = 0.0001;
+const BaseType DEFAULT_UPPER_BOUND = 0.001;
 
 int main(int argc, char *argv[]) {
     using std::chrono::duration_cast;
@@ -23,14 +24,13 @@ int main(int argc, char *argv[]) {
     RadiiRegion region{std::vector<Interval> {
         // Interval{0.46, 0.48},
         // Interval{0.822, 0.827},
-
-        // Interval{0.47, 0.471},
-        // Interval{0.56, 0.561},
-        // Interval{0.86, 0.862}
-        // {0.2, 0.9},
-        {0.713, 0.714},
-        {0.627, 0.628},
-        {0.555, 0.556},
+        {0.4, 0.5},
+        {0.7, 0.8},
+        // {0.86, 0.862}
+        // {0.15, 0.9},
+        // {0.7133, 0.7134},
+        // {0.6274, 0.6275},
+        // {0.5562, 0.5563},
         one, 
     }};
 
@@ -99,34 +99,16 @@ The results are outputed in std::cerr\n";
     auto t2 = high_resolution_clock::now();
   
     auto ms_int = duration_cast<milliseconds>(t2 - t1);
-    std::cerr << "duration:             \t" << ms_int.count()/1000 << "s\n";
+    std::cerr << "duration:             \t" << ms_int.count()/60'000 << "m " << (ms_int.count()/1000)%60 << "s\n";
 
     std::cerr << "results size:         \t" << results.size() << "\n";
-    std::vector<BaseType> a(region.GetIntervals().size()), A(region.GetIntervals().size());
     bool untouched = true;
     for (auto &x : results) {
         for (size_t i = 0; i < x.GetIntervals().size(); ++i) {
             std::cerr << std::setprecision(10) << x.GetIntervals()[i].lower() << " " << x.GetIntervals()[i].upper() << " ";
         }
         std::cerr << "\n";
-                
-        if (untouched) {
-            for (size_t i = 0; i < a.size(); ++i) {
-                a[i] = x.GetIntervals()[i].lower();
-                A[i] = x.GetIntervals()[i].upper();
-            }
-            untouched = false;    
-        }
-        for (size_t i = 0; i < a.size(); ++i) {
-            a[i] = std::min(a[i], x.GetIntervals()[i].lower());
-            A[i] = std::max(A[i], x.GetIntervals()[i].upper());
-        }
     }
-    std::cerr << "\nmin max: ";
-    for (size_t i = 0; i < a.size(); ++i) {
-        std::cerr << std::setprecision(10) << a[i] << " " << A[i] << " ";
-    }
-    std::cerr << "\n";
 
     return 0;
 }
