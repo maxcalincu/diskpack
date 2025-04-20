@@ -48,9 +48,9 @@ namespace diskpack {
         return false;
     }
     auto basic_generator = BasicGenerator{radii_.GetIntervals(), checker_packing_radius, checker_precision_upper_bound, checker_size_upper_bound};
-    // if (radii_.IsTooWide(0.000000000005)) {
-    //   return true;
-    // }
+    if (radii_.IsTooWide(0.00001001)) {
+      return true;
+    }
     for (size_t i = 0; i < radii_.GetIntervals().size(); ++i) {
         auto status = basic_generator.Generate(i);
         if (status == PackingStatus::invalid) {

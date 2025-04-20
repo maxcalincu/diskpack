@@ -106,6 +106,7 @@ namespace diskpack {
     ShuffleIndexes(shuffle);
   
     if (corona.IsCompleted()) {
+      // corona.DisplaySignature();
       return AdvancePacking();
     }
   

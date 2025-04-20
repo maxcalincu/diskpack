@@ -1,5 +1,6 @@
 #include <diskpack/corona.h>
-// #include <iostream>
+#include <iostream>
+#include <stdexcept>
 
 namespace diskpack {
 
@@ -44,8 +45,8 @@ bool Corona::IsCompleted() {
   PeekNewDisk(new_disk, old_disk.get_type());
   bool check_intersect =  !empty(intersect(new_disk.get_center_x(), old_disk.get_center_x())) &&
                           !empty(intersect(new_disk.get_center_y(), old_disk.get_center_y()));
-  // if (!check_intersect) {
-  //   std::cerr << "wow!\n";
+  // if (check_intersect) {
+    
   // }
   return check_intersect;
 }
@@ -111,7 +112,7 @@ void Corona::PeekNewDisk(Disk &new_disk, size_t index) {
                   lookup_table.radii[index], index);
   operators.pop_back();
 }
-void Corona::Push(DiskPointer disk, size_t index) {
+void Corona::Push(const DiskPointer &disk, size_t index) {
   bool use_front = corona.front()->precision() < corona.back()->precision();
   push_history.push(use_front);
   auto &operators = (use_front) ? operators_front : operators_back;
@@ -131,6 +132,22 @@ void Corona::Pop() {
 }
 
 const Disk &Corona::GetBase() { return base; }
+
+void Corona::DisplaySignature() {
+  std::cerr << "signature: " << "\n";
+    CoronaSignature signature(*this);
+    for (size_t i = 0; i < lookup_table.radii.size(); ++i) {
+      for (size_t j = 0; j < lookup_table.radii.size(); ++j) {
+        std::cerr << signature.GetTransitions(i, j) << " ";
+      }
+      std::cerr << "\n";
+    }
+    for (auto& i : signature.specimen_indexes) {
+      std::cerr << i << " ";
+    }
+    std::cerr << "\n";
+    // std::cerr << (!signature.TestRadii(lookup_table) ? "damn it\n" : "hell yeah\n"); 
+}
 
 DiskClockwiseCompare::DiskClockwiseCompare(const Disk &base) {
   center_x = base.get_center_x();
@@ -169,6 +186,73 @@ OperatorLookupTable::OperatorLookupTable(const std::vector<Interval> &radii_)
       presence(radii_.size() * radii_.size() * radii_.size()) {};
 
 SSORef OperatorLookupTable::operator()() { return std::ref(identity); }
+
+size_t& CoronaSignature::GetTransitions(size_t i, size_t j) {
+  return transitions[i < j ? (i * i + i)/2 + j : (j * j + j)/2 + i];
+}
+bool CoronaSignature::operator<(const CoronaSignature &other) const {
+  for (size_t i = 0; i < transitions.size(); ++i) {
+    if (transitions[i] != other.transitions[i]) {
+      return transitions[i] < other.transitions[i];
+    }
+  }
+  return false;
+}
+bool CoronaSignature::operator==(const CoronaSignature &other) const {
+  for (size_t i = 0; i < transitions.size(); ++i) {
+    if (transitions[i] != other.transitions[i]) {
+      return false;
+    }
+  }
+  return true;
+}
+CoronaSignature::CoronaSignature(Corona &specimen): base(specimen.base.get_type()), radii_size(specimen.lookup_table.radii.size()),
+                                                         specimen_indexes(specimen.corona.size()), transitions((radii_size * radii_size + radii_size)/2){
+
+    if (!specimen.IsCompleted()) {
+      throw std::runtime_error("CoronaSignature takes in only completed coronas");
+    }
+    for (size_t i = 0; i < specimen_indexes.size(); ++i) {
+      specimen_indexes[i] = specimen.corona[i]->get_type();
+    }
+    for (size_t i = 0; i + 1 < specimen_indexes.size(); ++i) {
+      ++GetTransitions(specimen_indexes[i], specimen_indexes[i + 1]);
+    }
+    ++GetTransitions(specimen_indexes[specimen_indexes.size() - 1], specimen_indexes[0]);
+}
+
+bool CoronaSignature::TestRadii(OperatorLookupTable& lookup_table) const {
+  auto& new_radii = lookup_table.radii;
+  Disk b(0, 0, new_radii[base], base);
+  std::list<DiskPointer> packing;
+  packing.push_back(std::make_shared<Disk>(std::move(Disk( new_radii[base] + new_radii[specimen_indexes[0]], 
+                                                              0, 
+                                                              new_radii[specimen_indexes[0]],
+                                                              specimen_indexes[0]))));
+  Corona test(b, packing, lookup_table);
+  size_t cur_front = 0, cur_back = 0;
+  for (size_t i = 1; i < specimen_indexes.size(); ++i) {
+    auto use_front = test.corona.front()->precision() < test.corona.back()->precision();
+    if (use_front) {
+      cur_front = (cur_front == 0 ? specimen_indexes.size() - 1 : cur_front - 1);
+    } else {
+      cur_back = (cur_back == specimen_indexes.size() - 1 ? 0 : cur_back + 1);
+    }
+    size_t next = specimen_indexes[(use_front ? cur_front : cur_back)];
+    Disk new_disk;
+    test.PeekNewDisk(new_disk, next);
+    if (std::any_of(packing.begin(), packing.end(), [&new_disk](const DiskPointer &disk) { 
+      return new_disk.intersects(*disk); 
+    })) {
+      return false;
+    }
+    packing.push_back(std::make_shared<Disk>(std::move(new_disk)));
+    test.Push(packing.back(), next);
+  }
+  return test.IsCompleted();
+}
+
+size_t CoronaSignature::GetBase() const { return base; }
 
 
 } // namespace CDP
