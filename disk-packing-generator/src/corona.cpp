@@ -1,4 +1,5 @@
 #include <diskpack/corona.h>
+// #include <iostream>
 
 namespace diskpack {
 
@@ -26,16 +27,27 @@ Corona::GetOperatorsProduct(const size_t &begin, const size_t &end,
          GetOperatorsProduct(mid, end, operators);
 }
 
-bool Corona::IsCompleted() const {
+bool Corona::IsCompleted() {
   assert(!corona.empty());
   auto cross_product =
       (corona.back()->get_center_x() - base.get_center_x()) *
           (corona.front()->get_center_y() - base.get_center_y()) -
       (corona.front()->get_center_x() - base.get_center_x()) *
-          (corona.back()->get_center_y() - base.get_center_y());
+          (corona.back()->get_center_y() - base.get_center_y());          
 
-  return (corona.size() > 2 && corona.back()->tangent(*corona.front()) &&
-          cergt(cross_product, 0.0L));
+  if (!(corona.size() > 2) || !corona.back()->tangent(*corona.front()) || !cergt(cross_product, 0.0L)) {
+    return false;
+  }
+  bool use_front = corona.front()->precision() < corona.back()->precision();
+  Disk new_disk;
+  const Disk &old_disk = *(!use_front ? corona.front() : corona.back());
+  PeekNewDisk(new_disk, old_disk.get_type());
+  bool check_intersect =  !empty(intersect(new_disk.get_center_x(), old_disk.get_center_x())) &&
+                          !empty(intersect(new_disk.get_center_y(), old_disk.get_center_y()));
+  // if (!check_intersect) {
+  //   std::cerr << "wow!\n";
+  // }
+  return check_intersect;
 }
 
 void Corona::GetSortedCorona(const std::list<DiskPointer> &packing) {

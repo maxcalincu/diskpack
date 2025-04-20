@@ -9,11 +9,13 @@ namespace diskpack {
   BasicGenerator::BasicGenerator(const std::vector<Interval> &radii_,
                                      const BaseType &packing_radius_,
                                      const BaseType &precision_upper_bound_,
-                                     const size_t &size_upper_bound_)
+                                     const size_t &size_upper_bound_,
+                                     const size_t &max_ignored_radii_)
       : radii(radii_), 
         packing_radius{packing_radius_},
         precision_upper_bound(precision_upper_bound_),
         size_upper_bound(size_upper_bound_),
+        max_ignored_radii(max_ignored_radii_),
         disk_queue(LessNormCompare), 
         frequency_table(radii_.size(), 0),
         lookup_table(radii_),
@@ -172,7 +174,7 @@ namespace diskpack {
   }
 
   bool BasicGenerator::PackingSatisfiesConstraints() const {
-    return std::find(frequency_table.begin(), frequency_table.end(), 0) == frequency_table.end();
+    return std::count(frequency_table.begin(), frequency_table.end(), 0) <= max_ignored_radii;
   }
 
   bool BasicGenerator::PackingIsLargeEnough() const {

@@ -9,7 +9,6 @@ add_library(diskpack SHARED
   src/corona.cpp
   src/generator.cpp
   src/geometry.cpp
-  src/checkers.cpp
   src/codec.cpp
 )
 

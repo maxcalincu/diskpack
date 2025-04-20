@@ -1,9 +1,10 @@
 #include <boost/numeric/interval.hpp>
 #include <memory>
+#include <vector>
+
 #pragma once
 
 namespace diskpack {
-
 using namespace boost::numeric;
 
 using BaseType = long double; /// using alias in case one wants to swap long
@@ -59,9 +60,9 @@ public:
   Disk &operator=(Disk &&other);
 
   Interval get_norm() const;
-  Interval get_radius() const;
-  Interval get_center_x() const;
-  Interval get_center_y() const;
+  const Interval &get_radius() const;
+  const Interval &get_center_x() const;
+  const Interval &get_center_y() const;
   size_t get_type() const;
   bool intersects(const Disk &other) const;
   bool tangent(const Disk &other) const;
@@ -70,5 +71,25 @@ public:
 };
 using DiskPointer = std::shared_ptr<Disk>;
 bool LessNormCompare(const DiskPointer a, const DiskPointer b);
+class RadiiRegion {
+  std::vector<Interval> intervals;
+public:
+    
+    RadiiRegion(const std::vector<Interval> &intervals_);
+    RadiiRegion(std::vector<Interval> &&intervals_);
+    
+    const std::vector<Interval>& GetIntervals() const;
+    
+    bool IsNarrowEnough(BaseType lower_bound) const;
+    bool IsTooWide(BaseType upper_bound) const;
+    Interval GetMinInterval() const;
+    Interval GetMaxInterval() const;
+
+    void Split(std::vector<RadiiRegion> &regions, size_t k = 2, size_t index = -1) const;
+    void GridSplit(std::vector<RadiiRegion> &regions, size_t k, size_t index = 0) const;
+};
+struct RadiiCompare {
+  bool operator()(const std::vector<Interval> &a, const std::vector<Interval> &b) const;
+};
 
 } // namespace CDP

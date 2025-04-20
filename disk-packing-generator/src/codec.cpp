@@ -1,9 +1,7 @@
-#include "diskpack/checkers.h"
 #include <diskpack/codec.h>
+
 #include <nlohmann/json.hpp>
 #include <fstream>
-#include <string>
-#include <vector>
 #include <iostream>
 
 using json = nlohmann::json;

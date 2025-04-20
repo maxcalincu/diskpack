@@ -1,12 +1,12 @@
+#include <diskpack/search.h>
 #include <diskpack/constants.h>
 #include <diskpack/generator.h>
 #include <diskpack/codec.h>
 
-#include <algorithm>
 #include <boost/program_options.hpp>
 #include <chrono>
 #include <iostream>
-#include <stdexcept>
+#include <fstream>
 
 using std::chrono::duration_cast;
 using std::chrono::high_resolution_clock;
@@ -20,19 +20,7 @@ const BaseType DEFAULT_PACKING_RADIUS = 5;
 const BaseType DEFAULT_PRECISION_UPPER_BOUND = 0.5;
 const std::string DEFAULT_OUTPUT_FILE = "../images/default.svg";
 
-std::vector<Interval> radii = {
-  // {0.3989583333, 0.399375},
-  // {0.46296875, 0.4635416667},
-  // one,
-  {0.7133, 0.7134},
-  {0.6274, 0.6275},
-  {0.5562, 0.5563},
-  one, 
-};
-
-// 0.4675 0.475 interval
-// 0.8275 0.835 interval
-
+std::vector<Interval> radii;
 
 int main(int argc, char *argv[]) {
   bool use_custom_values = false;
@@ -53,12 +41,11 @@ int main(int argc, char *argv[]) {
         
         ("precision,p", po::value<BaseType>()->default_value(DEFAULT_PRECISION_UPPER_BOUND), "Sets an upper limit on the precision of the disk coordinates\n")
 
-        ("central-disk,c", po::value<size_t>()->default_value(1), "Sets the central disk's type (0 <= i < radii.size()) where i is the index of the corresponding radius in the set. By default the radii are sorted in decreasing order\n")
-
+        ("central-disk,c", po::value<size_t>(), "Sets the central disk's type (0 <= i < radii.size()) where i is the index of the corresponding radius in the set. By default the radii are sorted in decreasing order\n")
         ("i2", po::value<size_t>(), "Use the i'th radius r which allow a compact packing by discs of sizes 1, r and s (0 < i <= 9)\n")
         ("i3", po::value<size_t>(), "Use the i'th pair (r, s) which allow a compact packing by disks of sizes 1, r and s (0 < i <= 164)\n")
-        ("values,v", "Use a custom radii configuration written in visualization-tool/src/main.cpp, line 22")
-    ;
+        ("input,i", po::value<std::string>(), "JSON file with the region to perform the search in")
+      ;
 
         po::positional_options_description p;
 
@@ -83,7 +70,7 @@ The exection ends with one of the following statuses: 'complete', 'invalid', 'pr
 'corona_error' status means that the corona continuity assumption was violated. This almost certainly means that coordinate interval width became abnormally big\n\
 \n\
 Use -n and -r flags to set an upper limit on the number of disks and the size of the region covered respectively. Iff at least one of these limits is reached the generation stops with 'complete' status\n\
-The --i2, --i3 and -v flags are used to establish the radii set used. Exactly one of these flags must be provided\n\
+The --i2, --i3 and -i flags are used to establish the radii set used. Exactly one of these flags must be provided\n\
 \n\
 The generated packing is stored in an output file (see --output flag). The output file remains untouched iff the execution ends with 'invalid' status\n";
 
@@ -97,11 +84,11 @@ The generated packing is stored in an output file (see --output flag). The outpu
         output_file = vm["output"].as<std::string>();
 
         if ((vm.count("i2") && vm.count("i3")) || 
-            (vm.count("values") && vm.count("i3")) || 
-            (vm.count("i2") && vm.count("values"))  ||
-            (!vm.count("i2") && !vm.count("i3") && !vm.count("values"))
+            (vm.count("input") && vm.count("i3")) || 
+            (vm.count("i2") && vm.count("input"))  ||
+            (!vm.count("i2") && !vm.count("i3") && !vm.count("input"))
           ) {
-            throw std::runtime_error("Exactly one flag from {i2, i3, v} must be provided");
+            throw std::runtime_error("Exactly one flag from {i2, i3, i} must be provided");
           }
         if (vm.count("i2")) {
           auto i2 = vm["i2"].as<size_t>() - 1;
@@ -117,7 +104,20 @@ The generated packing is stored in an output file (see --output flag). The outpu
           }
           radii = std::vector<Interval>{one, three_radii[i3].first, three_radii[i3].second};
         }
-        if (vm.count("central_disk")) {
+        if (vm.count("input")) {
+          std::vector<RadiiRegion> regions;
+          std::string filename = vm["input"].as<std::string>();
+          std::ifstream file(filename);
+          if (!file.is_open()) {
+            throw std::runtime_error("Failed to open file: " + filename);
+          }
+          DecodeRegionsJSON(file, regions);
+          if (regions.size() != 1) {
+            throw std::runtime_error("Exactly one region should be provided");
+          }
+          radii = regions[0].GetIntervals();
+        }
+        if (vm.count("central-disk")) {
           central_disk_type = vm["central-disk"].as<size_t>();
         } else {
           central_disk_type = std::distance(radii.begin(), std::min_element(radii.begin(), radii.end(), [](const Interval &a, const Interval &b) {
@@ -132,7 +132,9 @@ The generated packing is stored in an output file (see --output flag). The outpu
     std::cerr << "Unhandled exception: " << e.what() << "\n";
     return 1;
 }
-
+  std::cerr << "generate with radii: " << EncodeRegionsJSON(std::vector<RadiiRegion> {
+    {radii}
+  });
   BasicGenerator generator{radii, packing_radius, precision_upper_bound, size_upper_bound};
 
   auto t1 = high_resolution_clock::now();

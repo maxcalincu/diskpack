@@ -58,7 +58,7 @@ class Corona {
 public:
   Corona(const Disk &b, const std::list<DiskPointer> &packing,
          OperatorLookupTable &lookup_table_);
-  bool IsCompleted() const;            /// Checks whether corona is completed
+  bool IsCompleted();            /// Checks whether corona is completed
   bool IsContinuous() const;           /// Checks the assumption from row 7 and 8
   void PeekNewDisk(Disk &new_disk,
                    size_t index);      /// Constructs a new disk without changing the

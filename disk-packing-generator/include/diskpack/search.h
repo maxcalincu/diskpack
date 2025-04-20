@@ -1,6 +1,6 @@
-#include <algorithm>
+#include <diskpack/generator.h>
+
 #include <atomic>
-#include <diskpack/checkers.h>
 #include <iostream>
 #include <thread>
 #include <map>
@@ -8,9 +8,23 @@
 #pragma once
 
 namespace diskpack {
-    struct RadiiCompare {
-        bool operator()(const std::vector<Interval> &a, const std::vector<Interval> &b) const;
+    class CoronaChecker: private BasicGenerator {        
+    public:
+        bool Inspect(const RadiiRegion &radii_);
+        const std::list<DiskPointer> &GetPacking();
+        CoronaChecker(const BaseType &precision_upper_bound_);
     };
+    class BasicChecker {
+    protected:
+    const BaseType checker_packing_radius;
+    const BaseType checker_precision_upper_bound;
+    const size_t checker_size_upper_bound;
+
+    public:
+        bool Inspect(const RadiiRegion &radii_);
+        BasicChecker(const BaseType &packing_radius_, const BaseType &precision_upper_bound_, const size_t &size_upper_bound_);
+    };
+
 
     class DSUFilter {
         std::vector<size_t> component_size;
@@ -20,12 +34,11 @@ namespace diskpack {
         size_t Get(size_t x);
         void Unite(size_t x, size_t y);
     public:
-        DSUFilter(const std::vector<RadiiRegion> &elements);
-        void operator()(std::vector<RadiiRegion> &results);
+        DSUFilter();
+        void operator()(std::vector<RadiiRegion> &elements);
     };
 
     template <typename Checker>
-    // template <HasInspectMethod Checker>
     class Searcher {
         std::vector<RadiiRegion>& results;
         Checker c;
@@ -36,17 +49,16 @@ namespace diskpack {
                                                                                                           /// No false negative answers are produced
     public:
         Searcher(std::vector<RadiiRegion> &results_, Checker c_, BaseType lower_bound_, BaseType upper_bound_);    
-        void StartProcessing(const RadiiRegion& region);                                                  /// Public function. Distributes the tasks between multiple threads
+        void StartProcessing(std::vector<Interval> region);                                                  /// Public function. Distributes the tasks between multiple threads
     };
 
     template <typename Checker>
-    // template <HasInspectMethod Checker>
     Searcher<Checker>::Searcher(std::vector<RadiiRegion> &results_, Checker c_, BaseType lower_bound_, BaseType upper_bound_): results{results_}, c{c_},
                                                                                                                 upper_bound(upper_bound_), lower_bound(lower_bound_) {};
     
     template <typename Checker>
-    // template <HasInspectMethod Checker>
     void Searcher<Checker>::ProcessRegion(const RadiiRegion& region, std::vector<RadiiRegion>& r) {
+        // std::cout << 
         if (!region.IsTooWide(upper_bound)){
             if (!c.Inspect(region.GetIntervals())) {
                 return;
@@ -59,15 +71,17 @@ namespace diskpack {
 
         std::vector<RadiiRegion> children_regions;
         region.GridSplit(children_regions, 2);
-        
         for (auto& cr: children_regions) {
             ProcessRegion(cr, r);
         }
     }
 
     template <typename Checker>
-    // template <HasInspectMethod Checker>
-    void Searcher<Checker>::StartProcessing(const RadiiRegion& region) {
+    void Searcher<Checker>::StartProcessing(std::vector<Interval> intervals) {
+        std::sort(intervals.begin(), intervals.end(), [](const Interval& a, const Interval& b) {
+            return cerlt(a, b);
+        });
+        RadiiRegion region(intervals);
         std::vector<RadiiRegion> children_regions;
         size_t k = std::thread::hardware_concurrency();
         region.GridSplit(children_regions, k);
@@ -84,8 +98,10 @@ namespace diskpack {
                     if (index >= children_regions.size()) {
                         break;
                     }
+                    std::cerr << "\r" + std::to_string(((index + 1)*100) / children_regions.size()) + "% ";
                     auto &x = children_regions[index];
                     ProcessRegion(children_regions[index], thread_results[i]);
+                    std::cerr << "x";
                 }
             });
         }
@@ -99,9 +115,9 @@ namespace diskpack {
         for (auto &r : thread_results) {
             results.insert(results.end(), r.begin(), r.end());
         }
-        std::cerr << "initial result size\t" << results.size() << "\n";
-        DSUFilter filter{results};
-        filter(results);
+        std::cerr << "\ninitial result size\t" << results.size() << "\n";
+        
+        DSUFilter{}(results);
         std::sort(results.begin(), results.end(), [](const RadiiRegion &a, const RadiiRegion &b) {
             return RadiiCompare{}(a.GetIntervals(), b.GetIntervals());
         });

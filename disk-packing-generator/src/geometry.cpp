@@ -1,6 +1,90 @@
 #include <diskpack/geometry.h>
 
 namespace diskpack {
+ /// RadiiRegion
+ void RadiiRegion::Split(std::vector<RadiiRegion> &regions, size_t k, size_t index) const {
+  regions.clear();
+  regions.reserve(k);
+  auto intervals_copy = intervals;
+  auto it = index == -1 ? std::max_element(intervals_copy.begin(), intervals_copy.end(), [](const Interval& a, const Interval& b) {
+      return width(a) < width(b);
+  }) : intervals_copy.begin() + index;
+
+  auto initial = *it;
+  auto sub_width = (initial.upper() - initial.lower())/k;
+  auto next = std::next(it);
+  for (size_t i = 0; i < k; ++i) {
+      auto l =              initial.lower() + (i + 0) * sub_width;
+      auto u = (i < k - 1 ? initial.lower() + (i + 1) * sub_width : initial.upper());
+      *it = Interval{l, u};
+      if (next != intervals_copy.end()) {
+        if (cergt(*it, *next)) {
+          continue;
+        }
+      }
+      if (it != intervals_copy.begin()) {
+        if (cergt(*std::prev(it), *it)) {
+          continue;
+        }
+      }
+      regions.emplace_back(intervals_copy);
+  }
+}
+void RadiiRegion::GridSplit(std::vector<RadiiRegion> &regions, size_t k, size_t index) const {
+if (index == 0) {
+  regions.clear();
+  size_t s = 1;
+  for (size_t i = 0; i + 1 < intervals.size(); ++i) {
+    s *= k;
+  }
+  regions.reserve(s);
+}
+if (index + 1 >= intervals.size()) {
+  regions.emplace_back(intervals);
+  return;
+}
+std::vector<RadiiRegion> children_regions;
+Split(children_regions, k, index);
+for (auto &cr : children_regions) {
+  cr.GridSplit(regions, k, index + 1);
+}
+}
+const std::vector<Interval>& RadiiRegion::GetIntervals() const { return intervals; }
+bool RadiiRegion::IsNarrowEnough(BaseType lower_bound) const {
+  return !std::any_of(intervals.begin(), intervals.end(), [&lower_bound](const Interval& x) {
+      return width(x) > lower_bound;
+  }); 
+}
+
+bool RadiiRegion::IsTooWide(BaseType upper_bound) const {
+  return std::any_of(intervals.begin(), intervals.end(), [&upper_bound](const Interval& x) {
+      return width(x) > upper_bound;
+  });
+}
+
+RadiiRegion::RadiiRegion(const std::vector<Interval> &intervals_): intervals(intervals_) {};
+RadiiRegion::RadiiRegion(std::vector<Interval> &&intervals_): intervals(std::move(intervals_)) {}
+Interval RadiiRegion::GetMinInterval() const {
+return intervals.front();
+}
+Interval RadiiRegion::GetMaxInterval() const {
+return intervals.back();
+}
+
+bool RadiiCompare::operator()(const std::vector<Interval> &a, const std::vector<Interval> &b) const {
+  for (size_t i = 0; i < a.size(); ++i) {
+      if (a[i].lower() != b[i].lower()) {
+          return a[i].lower() < b[i].lower();
+      }
+      if (a[i].upper() != b[i].upper()) {
+          return a[i].upper() < b[i].upper();
+      }
+  }
+  return false;
+}
+
+//SpiralSimilarityOperator
+
 SpiralSimilarityOperator::SpiralSimilarityOperator(const Interval &x_,
                                                    const Interval &y_)
     : x{x_}, y{y_} {}
@@ -90,9 +174,9 @@ Disk &Disk::operator=(Disk &&other) {
 Disk::Disk() : center_x(0, 0), center_y(0, 0), radius(0, 0), disk_type(0) {};
 
 Interval Disk::get_norm() const { return square(center_x) + square(center_y); }
-Interval Disk::get_radius() const { return radius; }
-Interval Disk::get_center_x() const { return center_x; }
-Interval Disk::get_center_y() const { return center_y; }
+const Interval &Disk::get_radius() const { return radius; }
+const Interval &Disk::get_center_x() const { return center_x; }
+const Interval &Disk::get_center_y() const { return center_y; }
 size_t Disk::get_type() const { return disk_type; }
 BaseType Disk::precision() const {
   return std::min(width(center_x), width(center_y));

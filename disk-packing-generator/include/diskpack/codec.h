@@ -1,4 +1,5 @@
-#include <diskpack/checkers.h>
+#include <diskpack/geometry.h>
+#include <list>
 
 #pragma once
 

@@ -1,10 +1,9 @@
-#include "diskpack/checkers.h"
-#include "diskpack/codec.h"
 #include <diskpack/search.h>
+#include <diskpack/codec.h>
+
 #include <boost/program_options.hpp>
 #include <iomanip>
-#include <iostream>
-// #include <sstream>
+#include <fstream>
 
 using namespace diskpack;
 namespace po = boost::program_options;
@@ -20,6 +19,7 @@ int main(int argc, char *argv[]) {
     using std::chrono::high_resolution_clock;
     using std::chrono::milliseconds;
 
+    std::string output_file = "";
     size_t size_upper_bound;
     BaseType precision_upper_bound, packing_radius, lower_bound, upper_bound;
 
@@ -29,10 +29,12 @@ int main(int argc, char *argv[]) {
         // {0.4, 0.5},
         // {0.7, 0.8},
         // {0.86, 0.862}
-        // {0.15, 0.9},
-        {0.713, 0.714},
-        {0.627, 0.628},
-        {0.556, 0.557},
+        {0.15, 0.9},
+        // {0.713, 0.714},
+        // {0.627, 0.628},
+        // {0.556, 0.557},
+        // {0.52, 0.54},
+        // {0.52, 0.54},
         one, 
     }};
 
@@ -47,6 +49,8 @@ int main(int argc, char *argv[]) {
             ("precision,p", po::value<BaseType>()->default_value(DEFAULT_PRECISION_UPPER_BOUND), "Sets an upper limit on the precision of the disk coordinates\n")
             ("lower-bound,l", po::value<BaseType>()->default_value(DEFAULT_LOWER_BOUND), "Region width lower bound for viability check in the search")
             ("upper-bound,u", po::value<BaseType>()->default_value(DEFAULT_UPPER_BOUND), "Region width upper bound for viability check in the search")
+            ("input,i", po::value<std::string>(), "Path to JSON file with the region search in")
+            ("output,o", po::value<std::string>(), "Path to JSON file to store the output in. If none provided regions will be outputed in std::cout")
         ;
     
             po::positional_options_description p;
@@ -66,9 +70,7 @@ int main(int argc, char *argv[]) {
 The finder identifies all of the small subregions within a given region which contain a radii set that allows a compact disk packing. \n\
 Use -n and -r flags to set an upper limit on the number of disks and the size of the region covered respectively in viability checks.\n\
 Use -p flag to set an upper bound on the interval precision during viability checks\n\
-All regions with a smaller width than the lower_bound added to the results. All regions with a bigger width that the upper_bound are not checked for viability (use -u and -l flags to set them)\n\
-\n\
-The results are outputed in std::cerr\n";
+All regions with a smaller width than the lower_bound added to the results. All regions with a bigger width that the upper_bound are not checked for viability (use -u and -l flags to set them)\n";
     
                   return 0;
             }
@@ -79,8 +81,22 @@ The results are outputed in std::cerr\n";
             packing_radius = vm["region-size"].as<BaseType>();
             lower_bound = vm["lower-bound"].as<BaseType>();
             upper_bound = vm["upper-bound"].as<BaseType>();
-
-            
+            if (vm.count("input")) {
+                std::vector<RadiiRegion> regions;
+                std::string filename = vm["input"].as<std::string>();
+                std::ifstream file(filename);
+                if (!file.is_open()) {
+                  throw std::runtime_error("Failed to open file: " + filename);
+                }
+                DecodeRegionsJSON(file, regions);
+                if (regions.size() != 1) {
+                  throw std::runtime_error("Exactly one region should be provided");
+                }
+                region = regions[0].GetIntervals();
+              }
+            if (vm.count("output")) {
+                output_file = vm["output"].as<std::string>();
+            }
       } catch (const po::error& e) {
         std::cerr << "Error: " << e.what() << "\n";
         return 1;
@@ -97,7 +113,7 @@ The results are outputed in std::cerr\n";
     std::cerr << "hardware concurrencry:\t" << std::thread::hardware_concurrency() << "\n";
    
     auto t1 = high_resolution_clock::now();    
-    searcher.StartProcessing(region);
+    searcher.StartProcessing(region.GetIntervals());
     auto t2 = high_resolution_clock::now();
   
     auto ms_int = duration_cast<milliseconds>(t2 - t1);
@@ -105,15 +121,25 @@ The results are outputed in std::cerr\n";
 
     std::cerr << "results size:         \t" << results.size() << "\n";
     auto encoded = EncodeRegionsJSON(results);
-    std::cerr << encoded << "\n";
-    auto stream = std::stringstream(encoded);
-    DecodeRegionsJSON(stream, results);
-    for (auto &x : results) {
-        for (size_t i = 0; i < x.GetIntervals().size(); ++i) {
-            std::cerr << std::setprecision(10) << x.GetIntervals()[i].lower() << " " << x.GetIntervals()[i].upper() << " ";
+    if (output_file == "") {
+        std::cout << encoded << "\n";
+    } else {
+        std::ofstream out(output_file);
+        if (!out.is_open()) {
+            std::cerr << "Failed to open file: " + output_file + "\n";
+            std::cout << encoded << "\n";
+        } else {
+            out << encoded << "\n";
         }
-        std::cerr << "\n";
     }
+    // auto stream = std::stringstream(encoded);
+    // DecodeRegionsJSON(stream, results);
+    // for (auto &x : results) {
+    //     for (size_t i = 0; i < x.GetIntervals().size(); ++i) {
+    //         std::cerr << std::setprecision(10) << x.GetIntervals()[i].lower() << " " << x.GetIntervals()[i].upper() << " ";
+    //     }
+    //     std::cerr << "\n";
+    // }
 
     return 0;
 }

@@ -33,10 +33,11 @@ protected:
   const BaseType precision_upper_bound;       /// Upper bound for disks' interval width
   BaseType packing_radius;                    /// Determines the size of the generated packing
   size_t size_upper_bound;                    /// Upper bound on the number of disks in the packing
-  std::list<DiskPointer> packing;                    /// Current state of the packing
+  std::list<DiskPointer> packing;             /// Current state of the packing
   QueueType disk_queue;                       /// Queue of disks managed by PackingGenerator::Advance()
   OperatorLookupTable lookup_table;           /// Tool for efficient disk center computing
-  std::vector<size_t> frequency_table;           /// Used to keep track of disks
+  std::vector<size_t> frequency_table;        /// Used to keep track of disks
+  size_t max_ignored_radii;
   BaseType generated_radius;                  /// The radius of the circle which is covered
                                               /// by the generated packing
 
@@ -59,18 +60,20 @@ protected:
   bool HasIntersection(const Disk &new_disk) const;         /// Determines whether new_disk (certainly) intersects any other
                                                             /// disk from the packing
 
-  virtual bool IsInBounds(const Disk &disk) const;          /// Determines whether the disk is
+  bool IsInBounds(const Disk &disk) const;          /// Determines whether the disk is
                                                             /// entirely inside the desired region
-  virtual bool PackingSatisfiesConstraints() const;         /// Assumptions emposed on the packing are checked.
+  bool PackingSatisfiesConstraints() const;         /// Assumptions emposed on the packing are checked.
 
-  virtual bool PackingIsLargeEnough() const;                /// Packing size upper bound checker
+  bool PackingIsLargeEnough() const;                /// Packing size upper bound checker
 
   
 public:
-  BasicGenerator(  const std::vector<Interval> &radii_,
-                   const BaseType &packing_radius_,
-                   const BaseType &precision_upper_bound_,
-                   const size_t &size_upper_bound_);
+  BasicGenerator(  const std::vector<Interval> &radii,
+                   const BaseType &packing_radius,
+                   const BaseType &precision_upper_bound,
+                   const size_t &size_upper_bound,
+                   const size_t &max_ignored_radii = 0
+                   );
 
   PackingStatus Generate(const size_t &central_disk_type);    /// Starts the generation proccess
                                                               /// Use Generate() to generate a packing from scratch
