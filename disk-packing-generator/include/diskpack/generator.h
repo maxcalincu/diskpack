@@ -68,6 +68,8 @@ protected:
 
   
 public:
+  std::optional<ConnectivityGraph> graph;
+
   BasicGenerator(  const std::vector<Interval> &radii,
                    const BaseType &packing_radius,
                    const BaseType &precision_upper_bound,

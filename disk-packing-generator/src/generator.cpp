@@ -1,7 +1,8 @@
-#include "diskpack/corona.h"
 #include <diskpack/generator.h>
 #include <algorithm>
+#include <iostream>
 #include <ostream>
+#include <stdexcept>
 
 std::random_device rd;
 
@@ -20,11 +21,16 @@ namespace diskpack {
         frequency_table(radii_.size(), 0),
         lookup_table(radii_),
         generated_radius(0),  
-        g(rd()){};
+        g(rd()),
+        graph(lookup_table) {
+          if (graph->HasOverflow()) {
+            graph.reset();
+          }
+        };
   
   PackingStatus BasicGenerator::Generate(const size_t &central_disk_type) {
     if (radii.size() < 1) {
-      return PackingStatus::invalid;
+      throw std::runtime_error("BasicGenerator::Generate() called with no radii");
     }
     Reset();
     Push(Disk(zero, zero, radii[central_disk_type], central_disk_type), central_disk_type);
@@ -102,19 +108,22 @@ namespace diskpack {
 
   PackingStatus BasicGenerator::GapFill(Corona &corona) {
 
-    std::vector<size_t> shuffle(radii.size());
-    ShuffleIndexes(shuffle);
-  
     if (corona.IsCompleted()) {
       // corona.DisplaySignature();
       return AdvancePacking();
     }
+    
+    std::vector<size_t> shuffle(radii.size());
+    ShuffleIndexes(shuffle);
   
     Disk new_disk;
   
     for (size_t i = 0; i < radii.size(); ++i) {
-      corona.PeekNewDisk(new_disk, shuffle[i]);
-  
+    
+      if (!corona.PeekNewDisk(new_disk, shuffle[i], graph)) {
+        // std::cerr << "wow!!\n";
+        continue;
+      }
       if (HasIntersection(new_disk)) {
         continue;
       }

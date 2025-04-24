@@ -1,4 +1,3 @@
-#include <diskpack/search.h>
 #include <diskpack/constants.h>
 #include <diskpack/generator.h>
 #include <diskpack/codec.h>
@@ -132,7 +131,8 @@ The generated packing is stored in an output file (see --output flag). The outpu
     std::cerr << "Unhandled exception: " << e.what() << "\n";
     return 1;
 }
-  std::cerr << "generate with radii: " << EncodeRegionsJSON(std::vector<RadiiRegion> {
+  
+  std::cerr << "visualizer called on: " << EncodeRegionsJSON(std::vector<RadiiRegion> {
     {radii}
   });
   BasicGenerator generator{radii, packing_radius, precision_upper_bound, size_upper_bound};

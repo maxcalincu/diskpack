@@ -71,6 +71,9 @@ public:
 };
 using DiskPointer = std::shared_ptr<Disk>;
 bool LessNormCompare(const DiskPointer a, const DiskPointer b);
+
+///RadiiRegion
+
 class RadiiRegion {
   std::vector<Interval> intervals;
 public:
@@ -91,5 +94,34 @@ public:
 struct RadiiCompare {
   bool operator()(const std::vector<Interval> &a, const std::vector<Interval> &b) const;
 };
+
+
+
+/// Lookup table with spiral similarity operators. Since there at most
+/// radii.size()^3 different triplets of radii (therefore at most radii.size()^3
+/// different operators) lookup table is used to reduces the number of redundant
+/// computations
+using SSORef = std::reference_wrapper<SpiralSimilarityOperator>;
+
+class OperatorLookupTable {
+  std::vector<SpiralSimilarityOperator> values;
+  std::vector<bool> presence;
+  SpiralSimilarityOperator identity;
+  inline size_t GetIndex(size_t i, size_t j, size_t k);
+
+public:
+  std::vector<Interval> radii;
+  SSORef operator()(size_t base_type, size_t prev_type, size_t next_type);
+  SSORef operator()();
+  OperatorLookupTable(const std::vector<Interval> &radii_);
+};
+
+struct DiskClockwiseCompare {
+  Interval center_x;
+  Interval center_y;
+  DiskClockwiseCompare(const Disk &base);
+  bool operator()(const DiskPointer a, const DiskPointer b) const;
+};
+
 
 } // namespace CDP

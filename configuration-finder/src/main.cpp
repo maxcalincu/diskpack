@@ -4,6 +4,9 @@
 #include <boost/program_options.hpp>
 #include <iomanip>
 #include <fstream>
+#include <iostream>
+#include <chrono>
+#include <thread>
 
 using namespace diskpack;
 namespace po = boost::program_options;
@@ -12,7 +15,7 @@ const size_t DEFAULT_SIZE_UPPER_BOUND = 25;
 const BaseType DEFAULT_PACKING_RADIUS = 4;
 const BaseType DEFAULT_PRECISION_UPPER_BOUND = 0.2;
 const BaseType DEFAULT_LOWER_BOUND = 0.00001;
-const BaseType DEFAULT_UPPER_BOUND = 0.001;
+const BaseType DEFAULT_UPPER_BOUND = 0.002;
 
 int main(int argc, char *argv[]) {
     using std::chrono::duration_cast;
@@ -26,16 +29,21 @@ int main(int argc, char *argv[]) {
     RadiiRegion region{std::vector<Interval> {
         // {0.46, 0.48},
         // {0.822, 0.827},
-        // {0.4, 0.5},
-        // {0.7, 0.8},
         // {0.86, 0.862}
-        // {0.15, 0.9},
+
+        // {0.15, 0.99},
+        
         // {0.713, 0.714},
         // {0.627, 0.628},
         // {0.556, 0.557},
-        {0.6, 0.8},
-        // {0.82, 0.84},
-        {0.6, 0.8},
+
+        {0.70, 0.75},
+        {0.60, 0.65},
+        {0.51, 0.56},
+
+        // {0.8, 0.85}, 
+        // {0.8, 0.85}, 
+        // {0.8, 0.85},
         one, 
     }};
 
@@ -105,12 +113,14 @@ All regions with a smaller width than the lower_bound added to the results. All 
         std::cerr << "Unhandled exception: " << e.what() << "\n";
         return 1;
     }
-    
 
-    BasicChecker checker{packing_radius, precision_upper_bound, size_upper_bound};
     std::vector<RadiiRegion> results;
-    Searcher<BasicChecker> searcher{results, checker, lower_bound, upper_bound};
-   
+
+    Searcher searcher{results, lower_bound, upper_bound};
+
+    std::cerr << "finder called on:     \t" << EncodeRegionsJSON(std::vector<RadiiRegion> {
+        region
+    });
     std::cerr << "hardware concurrencry:\t" << std::thread::hardware_concurrency() << "\n";
    
     auto t1 = high_resolution_clock::now();    

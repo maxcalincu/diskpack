@@ -203,4 +203,43 @@ bool LessNormCompare(const DiskPointer a, const DiskPointer b) {
          median(sqrt(b->get_norm()) + b->get_radius());
 }
 
+DiskClockwiseCompare::DiskClockwiseCompare(const Disk &base) {
+  center_x = base.get_center_x();
+  center_y = base.get_center_y();
+}
+bool DiskClockwiseCompare::operator()(const DiskPointer a, const DiskPointer b) const {
+  auto ax = a->get_center_x() - center_x;
+  auto ay = a->get_center_y() - center_y;
+  auto bx = b->get_center_x() - center_x;
+  auto by = b->get_center_y() - center_y;
+  return (
+      cergt(ax, 0.0L) && zero_in(ay)
+          ? true
+          : (cergt(bx, 0.0L) && zero_in(by)
+                 ? false
+                 : (cerlt(ay * by, 0.0L) ? cergt(ay, 0.0L)
+                                         : cergt(by * ax - ay * bx, 0.0L))));
+}
+
+inline size_t OperatorLookupTable::GetIndex(size_t i, size_t j, size_t k) {
+  return i + j * radii.size() + k * radii.size() * radii.size();
+}
+SSORef OperatorLookupTable::operator()(size_t base_t, size_t prev_t,
+                                       size_t next_t) {
+  auto index = GetIndex(base_t, prev_t, next_t);
+  if (!presence[index]) {
+    values[index] = SpiralSimilarityOperator{
+        radii[base_t], radii[prev_t], radii[next_t], base_t, prev_t, next_t};
+    presence[index] = true;
+  }
+  return std::ref(values[index]);
+}
+OperatorLookupTable::OperatorLookupTable(const std::vector<Interval> &radii_)
+    : radii(radii_), identity(),
+      values(radii_.size() * radii_.size() * radii_.size()),
+      presence(radii_.size() * radii_.size() * radii_.size()) {};
+
+SSORef OperatorLookupTable::operator()() { return std::ref(identity); }
+
+
 } // namespace CDP
