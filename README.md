@@ -14,16 +14,8 @@ $ chmod +x build.sh
 $ ./build.sh  # Run from the root directory
 ```
 
-
-To pull the changes from remote repository run:
-
-```bash
-$ git checkout master
-$ git pull origin master
-```
-
 ## visualizer
-The visualizer generates a compact disk packings with some radii set from a given region. To use it, run the following commands from ``build`` directory:
+The visualizer generates a compact disk packing with some radii set from a given region. To use it, run the following commands:
 ```bash
 $ cd build
 $ make visualizer
@@ -33,7 +25,7 @@ $ ./visualizer --help
 This will display a detailed description of the command-line interface. ``svg`` images of the generated packing are located in ``images`` folder.
 
 ## finder
-The finder identifies all of the small subregions within a given region which contain a radii set that allows a compact disk packing. To use it, run these commands from ``build`` directory:
+The finder identifies all of the small subregions within a given region which contain a radii set that allows a compact disk packing. To use it, run these commands:
 
 ```bash
 $ cd build
