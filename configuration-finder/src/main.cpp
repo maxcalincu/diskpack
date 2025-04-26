@@ -15,7 +15,7 @@ const size_t DEFAULT_SIZE_UPPER_BOUND = 25;
 const BaseType DEFAULT_PACKING_RADIUS = 4;
 const BaseType DEFAULT_PRECISION_UPPER_BOUND = 0.2;
 const BaseType DEFAULT_LOWER_BOUND = 0.00001;
-const BaseType DEFAULT_UPPER_BOUND = 0.002;
+const BaseType DEFAULT_UPPER_BOUND = 0.004;
 
 int main(int argc, char *argv[]) {
     using std::chrono::duration_cast;
@@ -23,27 +23,37 @@ int main(int argc, char *argv[]) {
     using std::chrono::milliseconds;
 
     std::string output_file = "";
-    size_t size_upper_bound;
+    size_t size_upper_bound, k;
     BaseType precision_upper_bound, packing_radius, lower_bound, upper_bound;
 
     RadiiRegion region{std::vector<Interval> {
-        // {0.46, 0.48},
-        // {0.822, 0.827},
-        // {0.86, 0.862}
 
-        // {0.15, 0.99},
+        // {0.3, 0.99},
+        // {0.3, 0.99},
+
         
         // {0.713, 0.714},
         // {0.627, 0.628},
         // {0.556, 0.557},
 
-        {0.70, 0.75},
-        {0.60, 0.65},
-        {0.51, 0.56},
+        // {0.71331, 0.71332}, 
+        // {0.62746, 0.62747},
+        // {0.55623, 0.55624},
 
-        // {0.8, 0.85}, 
-        // {0.8, 0.85}, 
-        // {0.8, 0.85},
+        // {0.5, 0.6},
+        // {0.60, 0.70},
+        // {0.70, 0.8},
+
+        
+        // {0.70, 0.75},
+        // {0.55, 0.60}, 
+
+        // {0.40, 0.45},
+        {0.50, 0.65},
+        {0.50, 0.65},
+        {0.50, 0.65},
+
+
         one, 
     }};
 
@@ -51,13 +61,12 @@ int main(int argc, char *argv[]) {
         po::options_description desc("Allowed options");
         desc.add_options()
             ("help,h", "Show this help message\n")
-    
-            ("region-size,r", po::value<BaseType>()->default_value(DEFAULT_PACKING_RADIUS), "Sets an upper limit on the region size. Only a circular region of the plane with a given radius (provided by this flag) will be covered with disks\n")
-            ("number-of-disks,n", po::value<size_t>()->default_value(DEFAULT_SIZE_UPPER_BOUND), "Sets an upper limit on the number of disks the packing contains\n")
-                 
-            ("precision,p", po::value<BaseType>()->default_value(DEFAULT_PRECISION_UPPER_BOUND), "Sets an upper limit on the precision of the disk coordinates\n")
+            
             ("lower-bound,l", po::value<BaseType>()->default_value(DEFAULT_LOWER_BOUND), "Region width lower bound for viability check in the search")
             ("upper-bound,u", po::value<BaseType>()->default_value(DEFAULT_UPPER_BOUND), "Region width upper bound for viability check in the search")
+
+            ("concurrency,k", po::value<size_t>(), "Number of threads in the thread pool")
+
             ("input,i", po::value<std::string>(), "Path to JSON file with the region search in")
             ("output,o", po::value<std::string>(), "Path to JSON file to store the output in. If none provided regions will be outputed in std::cout")
         ;
@@ -84,12 +93,14 @@ All regions with a smaller width than the lower_bound added to the results. All 
                   return 0;
             }
             po::notify(vm);
-    
-            size_upper_bound = vm["number-of-disks"].as<size_t>();
-            precision_upper_bound = vm["precision"].as<BaseType>();
-            packing_radius = vm["region-size"].as<BaseType>();
+
             lower_bound = vm["lower-bound"].as<BaseType>();
             upper_bound = vm["upper-bound"].as<BaseType>();
+            if (vm.count("concurrency")) {
+                k = vm["concurrency"].as<size_t>();
+            } else {
+                k = std::thread::hardware_concurrency();
+            }
             if (vm.count("input")) {
                 std::vector<RadiiRegion> regions;
                 std::string filename = vm["input"].as<std::string>();
@@ -124,7 +135,7 @@ All regions with a smaller width than the lower_bound added to the results. All 
     std::cerr << "hardware concurrencry:\t" << std::thread::hardware_concurrency() << "\n";
    
     auto t1 = high_resolution_clock::now();    
-    searcher.StartProcessing(region.GetIntervals());
+    searcher.StartProcessing(region.GetIntervals(), k);
     auto t2 = high_resolution_clock::now();
   
     auto ms_int = duration_cast<milliseconds>(t2 - t1);

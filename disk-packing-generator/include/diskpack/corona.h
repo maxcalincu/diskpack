@@ -22,8 +22,10 @@ namespace diskpack {
   class ConnectivityGraph {
   public:
     const size_t MAX_CORONA_SIGNATURES = 5'000;
+    BaseType PRECISION_THRESHOLD;
     using VersionDiffStack = std::stack<std::shared_ptr<SignatureList>>;
   private:
+    bool is_broken = false;
     std::queue<std::tuple<size_t, size_t, size_t>> redundant_triangles;
     std::vector<SignatureList> signatures;
     std::vector<VersionDiffStack> diffs;
@@ -61,6 +63,7 @@ namespace diskpack {
                                       /// corona.size())
 
     std::vector<SSORef> operators_front;  /// Helper objects for compuitng new disks' centers
+    // std::vector<SSORef> reversed_operators_front;
     std::vector<SSORef> operators_back;   ///
     IntervalPair leaf_front;              ///
     IntervalPair leaf_back;               ///

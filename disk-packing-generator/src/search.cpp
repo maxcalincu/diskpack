@@ -1,4 +1,6 @@
 #include <diskpack/search.h>
+#include <diskpack/codec.h>
+
 
 #include <atomic>
 #include <iostream>
@@ -119,16 +121,15 @@ namespace diskpack {
         return true; 
     }
 
-    void Searcher::StartProcessing(std::vector<Interval> intervals) {
+    void Searcher::StartProcessing(std::vector<Interval> intervals, size_t k) {
         std::sort(intervals.begin(), intervals.end(), [](const Interval& a, const Interval& b) {
             return cerlt(a, b);
         });
 
         RadiiRegion region(intervals);
         std::vector<RadiiRegion> children_regions;
-        size_t k = std::thread::hardware_concurrency();
         region.GridSplit(children_regions, k);
-        std::vector<std::vector<RadiiRegion>> thread_results(k * 2);
+        std::vector<std::vector<RadiiRegion>> thread_results(k);
         std::vector<std::thread> threads;
         
         std::atomic<size_t> task_index{0};
@@ -142,7 +143,7 @@ namespace diskpack {
                         break;
                     }
                     auto progress = ((index + 1)*10'000) / children_regions.size();
-                    std::cerr << "\r" + std::to_string(progress/100) + "." + std::to_string(progress%100) + "% ";
+                    std::cerr << "\r" + std::to_string(progress/100) + "." + (progress%100 < 10 ? "0" : "") + std::to_string(progress%100) + "% ";
                     auto &x = children_regions[index];
                     std::optional<ConnectivityGraph> graph = std::nullopt;
                     ProcessRegion(children_regions[index], thread_results[i], graph);

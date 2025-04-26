@@ -1,6 +1,6 @@
-#include "diskpack/corona.h"
 #include <diskpack/generator.h>
 #include <map>
+#include <thread>
 
 #pragma once
 
@@ -26,7 +26,7 @@ namespace diskpack {
         void ProcessRegion(const RadiiRegion& region, std::vector<RadiiRegion>& r, std::optional<ConnectivityGraph> &graph);                                                    /// Inspect a region for potential compact disk packings.
     public:
         Searcher(std::vector<RadiiRegion> &results, BaseType lower_bound, BaseType upper_bound);    
-        void StartProcessing(std::vector<Interval> region);                                                  /// Public function. Distributes the tasks between multiple threads
+        void StartProcessing(std::vector<Interval> region, size_t k = std::thread::hardware_concurrency());                                                  /// Public function. Distributes the tasks between multiple threads
     };
 
 }

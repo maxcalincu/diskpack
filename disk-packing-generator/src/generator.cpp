@@ -32,6 +32,12 @@ namespace diskpack {
     if (radii.size() < 1) {
       throw std::runtime_error("BasicGenerator::Generate() called with no radii");
     }
+    if (graph.has_value()) {
+      if (!graph->IsViable()) {
+        std::cerr << "Not viable!\n";
+        return invalid;
+      }
+    }
     Reset();
     Push(Disk(zero, zero, radii[central_disk_type], central_disk_type), central_disk_type);
   
@@ -42,19 +48,19 @@ namespace diskpack {
       Push(Disk(radii[central_disk_type] + radii[i], zero, radii[i], i), i);
   
       auto status = AdvancePacking();
-      if (status != PackingStatus::invalid) {
+      if (status != invalid) {
         return status;
       }
       Pop(i);
     }
   
     Pop(central_disk_type);
-    return PackingStatus::invalid;
+    return invalid;
   }
   
   PackingStatus BasicGenerator::Resume() {
     if (packing.size() < 2) {
-      return PackingStatus::invalid;
+      return invalid;
     }
     return AdvancePacking();
   }
@@ -74,33 +80,33 @@ namespace diskpack {
   /// Main recursive functions
   PackingStatus BasicGenerator::AdvancePacking() {
     if (disk_queue.empty()) {
-      return PackingStatus::invalid;
+      return invalid;
     }
     
     auto base = disk_queue.extract(disk_queue.begin()).value();
     
     if (base->precision() > precision_upper_bound) {
       SetGeneratedRadius(*base);
-      return PackingStatus::precision_error;
+      return precision_error;
     }
 
     if (!IsInBounds(*base) || PackingIsLargeEnough()) {
       disk_queue.insert(base);
       if (!PackingSatisfiesConstraints()) {
-        return PackingStatus::invalid;
+        return invalid;
       }
       SetGeneratedRadius(*base);
-      return PackingStatus::complete;
+      return complete;
     }
   
     Corona corona(*base, packing, lookup_table);
     if (!corona.IsContinuous()) {
       SetGeneratedRadius(*base);
-      return PackingStatus::corona_error;
+      return corona_error;
     }
   
     auto status = GapFill(corona);
-    if (status == PackingStatus::invalid) {
+    if (status == invalid) {
       disk_queue.insert(base);
     }
     return status;
@@ -109,7 +115,7 @@ namespace diskpack {
   PackingStatus BasicGenerator::GapFill(Corona &corona) {
 
     if (corona.IsCompleted()) {
-      // corona.DisplaySignature();
+      ///// corona.DisplaySignature();
       return AdvancePacking();
     }
     
@@ -132,25 +138,25 @@ namespace diskpack {
       corona.Push(packing.back(), shuffle[i]);
   
       auto status = GapFill(corona);
-      if (status != PackingStatus::invalid) {
+      if (status != invalid) {
         return status;
       }
   
       corona.Pop();
       Pop(shuffle[i]);
     }
-    return PackingStatus::invalid;
+    return invalid;
   }
   
   std::ostream &operator<<(std::ostream &out, PackingStatus status) {
     switch (status) {
-    case PackingStatus::complete:
+    case complete:
       return out << "complete";
-    case PackingStatus::invalid:
+    case invalid:
       return out << "invalid";
-    case PackingStatus::corona_error:
+    case corona_error:
       return out << "corona_error";
-    case PackingStatus::precision_error:
+    case precision_error:
       return out << "precision_error";
     }
     return out;

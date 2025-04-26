@@ -1,3 +1,4 @@
+#include "diskpack/geometry.h"
 #include <algorithm>
 #include <diskpack/corona.h>
 #include <functional>
@@ -50,7 +51,7 @@ bool Corona::IsCompleted() {
   PeekNewDisk(new_disk, old_disk.get_type());
   bool check_intersect =  !empty(intersect(new_disk.get_center_x(), old_disk.get_center_x())) &&
                           !empty(intersect(new_disk.get_center_y(), old_disk.get_center_y()));
-  // if (check_intersect) {
+  // if (heck_intersect) {
     
   // }
   return check_intersect;
@@ -86,6 +87,7 @@ Corona::Corona(const Disk &b, const std::list<DiskPointer> &packing,
     : base(b), lookup_table(lookup_table_) {
   operators_back.reserve(DEFAULT_OPERATORS_SIZE);
   operators_front.reserve(DEFAULT_OPERATORS_SIZE);
+  // reversed_operators_front.reserve(DEFAULT_OPERATORS_SIZE);
 
   GetSortedCorona(packing);
   assert(!corona.empty());
@@ -134,21 +136,32 @@ void Corona::Push(const DiskPointer &disk, size_t index) {
                                              : corona.back()->get_type(),
                                    index));
   (use_front) ? corona.push_front(disk) : corona.push_back(disk);
+  // if (use_front) {
+  //   reversed_operators_front.push_back(lookup_table(base.get_type(),
+  //                                                   index,
+  //                                                   corona.front()->get_type()));
+  // }
 }
 
 void Corona::Pop() {
   auto use_front = push_history.top();
   push_history.pop();
-  (use_front) ? operators_front.pop_back() : operators_back.pop_back();
-
-  (use_front) ? corona.pop_front() : corona.pop_back();
+  if (use_front) {
+    operators_front.pop_back();
+    corona.pop_front();
+    // reversed_operators_front.pop_back();
+  } else {
+    operators_back.pop_back();
+    corona.pop_back();
+  }
 }
 
 const Disk &Corona::GetBase() { return base; }
 
 void Corona::DisplaySignature() {
-  std::cerr << "signature: " << "\n";
+   std::cerr << "signature: " << "\n";
     CoronaSignature signature(*this);
+    std::cerr << "base: " << signature.base << "\n";
     for (size_t i = 0; i < lookup_table.radii.size(); ++i) {
       for (size_t j = 0; j < lookup_table.radii.size(); ++j) {
         std::cerr << signature.GetTransitions(i, j) << " ";
@@ -164,10 +177,10 @@ void Corona::DisplaySignature() {
 ///CoronaSignature
 
 size_t& CoronaSignature::GetTransitions(size_t i, size_t j) {
-  return transitions[i < j ? (i * i + i)/2 + j : (j * j + j)/2 + i];
+  return transitions[i > j ? (i * i + i)/2 + j : (j * j + j)/2 + i];
 }
 size_t CoronaSignature::GetTransitionsConst(size_t i, size_t j) const {
-  return transitions[i < j ? (i * i + i)/2 + j : (j * j + j)/2 + i];
+  return transitions[i > j ? (i * i + i)/2 + j : (j * j + j)/2 + i];
 }
 bool CoronaSignature::operator<(const CoronaSignature &other) const {
   for (size_t i = 0; i < transitions.size(); ++i) {
@@ -244,13 +257,41 @@ bool CoronaSignaturePointerCompare(const CoronaSignaturePointer &a, const Corona
 void ConnectivityGraph::CoronaFill(Corona& corona, std::list<DiskPointer> &packing, size_t starting_index, std::set<CoronaSignaturePointer, decltype(&CoronaSignaturePointerCompare)> &unique_signatures) {
     auto& radii = corona.lookup_table.radii;
     if (corona.IsCompleted()) {
+
+      // corona.operators_back.push_back(corona.lookup_table(corona.base.get_type(),
+      //                                                     corona.corona.back()->get_type(),
+      //                                                     corona.corona.front()->get_type()));
+
+      // assert(corona.reversed_operators_front.size() == corona.operators_front.size());
+      // auto operator_back = corona.GetOperatorsProduct(0, corona.operators_back.size(), corona.operators_back);
+      // auto reversed_operator_front = corona.GetOperatorsProduct(0, corona.reversed_operators_front.size(), corona.reversed_operators_front);
+      // auto operator_front = corona.GetOperatorsProduct(0, corona.operators_front.size(), corona.operators_front);
+      // operator_front.y *= -1;
+      // corona.operators_back.pop_back();
+      // auto print = [](const SpiralSimilarityOperator &a) {
+      //   std::cerr <<  a.x.lower() << " " << a.x.upper() << " " <<
+      //                 a.y.lower() << " " << a.y.upper() << "\n";
+      // };
+      // auto identity_operator = reversed_operator_front * operator_back;
+
+      // std::cerr << "back : ";
+      // print(operator_back);
+      // std::cerr << "front : ";
+      // print(operator_front);
+      // std::cerr << "sum : ";
+      // print(operator_front * reversed_operator_front);
+      // std::cerr << "\n";
+
+      // if (!in(1.0L, identity_operator.x) || !in(0.0L, identity_operator.y)) {
+        // return;
+      // }
       CoronaSignaturePointer signature = std::make_shared<CoronaSignature>(corona);
+      // corona.DisplaySignature();
       if (unique_signatures.insert(signature).second) {
-        // corona.DisplaySignature();
         signatures[corona.base.get_type()].push_back(signature);
         Push(*signature);
       }
-      return;
+      // return;
     }
   
     Disk new_disk;
@@ -262,6 +303,10 @@ void ConnectivityGraph::CoronaFill(Corona& corona, std::list<DiskPointer> &packi
          return new_disk.intersects(*disk); 
         })) {
         continue;
+      }
+      if (new_disk.precision() > PRECISION_THRESHOLD) {
+        is_broken = true;
+        return;
       }
   
       packing.push_back(std::make_shared<Disk>(std::move(new_disk)));
@@ -287,6 +332,10 @@ ConnectivityGraph::ConnectivityGraph(OperatorLookupTable &lookup_table):  diffs(
                                                                                   std::vector<bool>(lookup_table.radii.size(), false)) {
   std::list<DiskPointer> packing;
   auto& radii = lookup_table.radii;
+  PRECISION_THRESHOLD = std::min_element(radii.begin(), radii.end(), [] (const Interval &x, const Interval &y) {
+    return x.lower() < y.lower();
+  })->lower() / 3.0L;
+
   for (size_t base = 0; base < radii.size(); ++base) {
     Disk base_disk(zero, zero, radii[base], base);
     std::set<CoronaSignaturePointer, decltype(&CoronaSignaturePointerCompare)> unique_signatures(CoronaSignaturePointerCompare);
@@ -297,8 +346,29 @@ ConnectivityGraph::ConnectivityGraph(OperatorLookupTable &lookup_table):  diffs(
       packing.clear();
     }
   }
+  for (size_t base = 0; base < edges.size(); ++base) {
+    for (size_t i = 0; i < edges.size(); ++i) {
+      for (size_t j = i; j < edges.size(); ++j) {
+        if (GetTransitionsConst(base, i, j) == 0) {
+          redundant_triangles.push(std::make_tuple(base, i, j));
+        }
+      }
+    }
+  }
+  if (HasOverflow()) {
+    return;
+  }
   RemoveRedundantTriangles();
   UpdateEdges();
+  // for (size_t base = 0; base < edges.size(); ++base) {
+  //   for (auto signature : signatures[base]) {
+  //     std::cerr << base << " : ";
+  //     for (auto index : signature->specimen_indexes) {
+  //       std::cerr << index << " ";
+  //     }
+  //     std::cerr << "\n";
+  //   }
+  // }
 }
 
 void ConnectivityGraph::Refine(OperatorLookupTable &lookup_table) {
@@ -345,7 +415,7 @@ bool ConnectivityGraph::Restore() {
 }
 
 bool ConnectivityGraph::HasOverflow() const {
-  return std::any_of(signatures.begin(), signatures.end(), [this] (const SignatureList& x){
+  return is_broken || std::any_of(signatures.begin(), signatures.end(), [this] (const SignatureList& x){
     return x.size() > MAX_CORONA_SIGNATURES;
   });
 }
@@ -357,14 +427,10 @@ void ConnectivityGraph::Push(const CoronaSignature& signature) {
 }
 
 void ConnectivityGraph::Pop(const CoronaSignature& signature) {
-  // for (size_t x = 0; x < signature.transitions.size(); ++x) {
-  //   transitions[signature.base][x] -= signature.transitions[x];
-  //   if (transitions[signature.base][x])
-  // }
   for (size_t i = 0; i < edges.size(); ++i) {
     for (size_t j = i; j < edges.size(); ++j) {
       GetTransitions(signature.base, i, j) -= signature.GetTransitionsConst(i, j);
-      if (signature.GetTransitionsConst(i, j) > 0 && GetTransitions(signature.base, i, j) == 0) {
+      if (signature.GetTransitionsConst(i, j) > 0 && GetTransitionsConst(signature.base, i, j) == 0) {
         redundant_triangles.push(std::make_tuple(i, j, signature.base));
       }
     }
@@ -376,16 +442,17 @@ void ConnectivityGraph::RemoveRedundantTriangles(std::shared_ptr<std::vector<std
   while(!redundant_triangles.empty()) {
     auto [i, j, k] = redundant_triangles.front();
     redundant_triangles.pop();
-    if (GetTransitionsConst(k, i, j) == 0 && GetTransitionsConst(j, i, k) == 0 && GetTransitionsConst(i, k, j) == 0) {
-      continue;
-    }
     std::vector<size_t> ijk {
       i, j, k
     };
-    for (size_t rotation_index = 0; rotation_index < 0; ++rotation_index) {
+    for (size_t rotation_index = 0; rotation_index < ijk.size(); ++rotation_index) {
+      std::rotate(ijk.begin(), std::next(ijk.begin()), ijk.end());
+      if (GetTransitionsConst(ijk[0], ijk[1], ijk[2]) == 0) {
+        continue;
+      }
       for (auto it = signatures[ijk[0]].begin(); it != signatures[ijk[0]].end();) {
         auto signature = *it;
-        if (signature->GetTransitions(ijk[1], ijk[2]) > 0) {
+        if (signature->GetTransitionsConst(ijk[1], ijk[2]) > 0) {
           removed_signatures[ijk[0]].push_back(signature);
           it = signatures[ijk[0]].erase(it);
           Pop(*signature);
@@ -393,7 +460,7 @@ void ConnectivityGraph::RemoveRedundantTriangles(std::shared_ptr<std::vector<std
           ++it;
         }
       }
-      std::rotate(ijk.begin(), std::next(ijk.begin()), ijk.end());
+
     }
   }
 
@@ -405,11 +472,11 @@ void ConnectivityGraph::RemoveRedundantTriangles(std::shared_ptr<std::vector<std
 }
 
 size_t& ConnectivityGraph::GetTransitions(size_t base, size_t i, size_t j) {
-  return transitions[base][i < j ? (i * i + i)/2 + j : (j * j + j)/2 + i];
+  return transitions[base][i > j ? (i * i + i)/2 + j : (j * j + j)/2 + i];
 }
 
 size_t ConnectivityGraph::GetTransitionsConst(size_t base, size_t i, size_t j) const {
-  return transitions[base][i < j ? (i * i + i)/2 + j : (j * j + j)/2 + i];
+  return transitions[base][i > j ? (i * i + i)/2 + j : (j * j + j)/2 + i];
 }
 
 
@@ -433,7 +500,6 @@ bool ConnectivityGraph::IsViable() const {
   
   ///Condition 1: Graph G is connected 
   {
-    // std::cerr << edges.size() << " edges.size()\n";
     std::vector<bool> unvisited(edges.size(), true);
     std::queue<size_t> q;
     q.push(0);
@@ -454,7 +520,6 @@ bool ConnectivityGraph::IsViable() const {
 
   }
 
-
   ///Condition 2: if removing a vertex i disconnects G into G1,...Gk, 
               //  then there must be an i-corona with at least one disk in each of G1,...,Gk
   {
@@ -474,7 +539,7 @@ bool ConnectivityGraph::IsViable() const {
           size_t x = q.front();
           q.pop();
           for (size_t neighbor = 0; neighbor < edges.size(); ++neighbor) {
-            if (components[neighbor]) {
+            if (components[neighbor] || !edges[x][neighbor]) {
               continue;
             }
             components[neighbor] = cur_component;
@@ -482,6 +547,7 @@ bool ConnectivityGraph::IsViable() const {
           }
         }
       }
+
       if (!std::any_of(signatures[disconnected_vertice].begin(), signatures[disconnected_vertice].end(), 
                         [cur_component, this, &components] (const CoronaSignaturePointer& signature) {
           for (size_t component = 1; component <= cur_component; ++component) {
@@ -509,7 +575,9 @@ bool ConnectivityGraph::IsViable() const {
     std::iota(components.begin(), components.end(), 0);
 
     auto get_index = [&] (size_t i, size_t j, size_t k) {
-      return  i + j + k + (edges.size() - 1) * std::min({i, j, k}) + (edges.size() * edges.size() - 1) * std::max({i, j, k});
+      std::vector<size_t> ijk{i, j, k};
+      std::sort(ijk.begin(), ijk.end());
+      return  ijk[0] + edges.size() * ijk[1] + (edges.size() * edges.size()) * ijk[2];
     };
     std::function<size_t(size_t)> get_parent = [&](size_t x) {
       components[x] = (components[x] == x ? x : get_parent(components[x]));
@@ -547,13 +615,15 @@ bool ConnectivityGraph::IsViable() const {
     for (size_t i = 0; i < edges.size(); ++i) {
       for (size_t j = i; j < edges.size(); ++j) {
         for (size_t k = j; k < edges.size(); ++k) {    
-          size_t index = get_index(i, j, k);
-          component_disk_types[index][i] = true;
-          component_disk_types[index][j] = true;
-          component_disk_types[index][k] = true;
+          size_t component = get_parent(get_index(i, j, k));
+
+          component_disk_types[component][i] = true;
+          component_disk_types[component][j] = true;
+          component_disk_types[component][k] = true;
         }
       }
     }
+
     if (!std::any_of(component_disk_types.begin(), component_disk_types.end(), [](const std::vector<bool> &disks){
       return !std::any_of(disks.begin(), disks.end(), [](bool u) {return !u;});
     })) {
