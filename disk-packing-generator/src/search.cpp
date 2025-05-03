@@ -1,7 +1,6 @@
 #include <diskpack/search.h>
 #include <diskpack/codec.h>
 
-
 #include <atomic>
 #include <iostream>
 #include <string>
@@ -72,7 +71,9 @@ namespace diskpack {
     //Searcher
 
     Searcher::Searcher(std::vector<RadiiRegion> &results_, BaseType lower_bound_, BaseType upper_bound_): results{results_},
+
                                                                                                           upper_bound(upper_bound_), lower_bound(lower_bound_) {};
+    
     
     void Searcher::ProcessRegion(const RadiiRegion& region, std::vector<RadiiRegion>& r, std::optional<ConnectivityGraph> &graph) {
         if (!region.IsTooWide(upper_bound)){
@@ -102,6 +103,11 @@ namespace diskpack {
             if (ExpensiveCheck(region.GetIntervals())) {
                 r.emplace_back(region.GetIntervals());
             }
+            if (graph.has_value()) {
+                if (!graph->Restore()) {
+                    graph.reset();
+                }
+            }
             return;
         }
 
@@ -128,7 +134,7 @@ namespace diskpack {
 
         RadiiRegion region(intervals);
         std::vector<RadiiRegion> children_regions;
-        region.GridSplit(children_regions, k);
+        region.GridSplit(children_regions, 1 * k);
         std::vector<std::vector<RadiiRegion>> thread_results(k);
         std::vector<std::thread> threads;
         
@@ -142,8 +148,11 @@ namespace diskpack {
                     if (index >= children_regions.size()) {
                         break;
                     }
-                    auto progress = ((index + 1)*10'000) / children_regions.size();
-                    std::cerr << "\r" + std::to_string(progress/100) + "." + (progress%100 < 10 ? "0" : "") + std::to_string(progress%100) + "% ";
+                    auto progress = ((index + 1)*100'000) / children_regions.size();
+                    std::cerr << "\r" + std::to_string(progress/1000) + "." + 
+                                        (progress%1000 < 10 ? "0" : "") + 
+                                        (progress%1000 < 100 ? "0" : "") + 
+                                        std::to_string(progress%1000) + "% ";
                     auto &x = children_regions[index];
                     std::optional<ConnectivityGraph> graph = std::nullopt;
                     ProcessRegion(children_regions[index], thread_results[i], graph);
@@ -161,12 +170,11 @@ namespace diskpack {
         for (auto &r : thread_results) {
             results.insert(results.end(), r.begin(), r.end());
         }
-        std::cerr << "\ninitial result size\t" << results.size() << "\n";
+        std::cerr << "\ninitial result size:\t" << results.size() << "\n";
         
         DSUFilter{}(results);
         std::sort(results.begin(), results.end(), [](const RadiiRegion &a, const RadiiRegion &b) {
             return RadiiCompare{}(a.GetIntervals(), b.GetIntervals());
         });
     }
-
 }

@@ -14,8 +14,8 @@ namespace po = boost::program_options;
 const size_t DEFAULT_SIZE_UPPER_BOUND = 25;
 const BaseType DEFAULT_PACKING_RADIUS = 4;
 const BaseType DEFAULT_PRECISION_UPPER_BOUND = 0.2;
-const BaseType DEFAULT_LOWER_BOUND = 0.00001;
-const BaseType DEFAULT_UPPER_BOUND = 0.004;
+const BaseType DEFAULT_LOWER_BOUND = 0.0000001;
+const BaseType DEFAULT_UPPER_BOUND = 0.008;
 
 int main(int argc, char *argv[]) {
     using std::chrono::duration_cast;
@@ -133,7 +133,7 @@ All regions with a smaller width than the lower_bound added to the results. All 
         region
     });
     std::cerr << "hardware concurrencry:\t" << std::thread::hardware_concurrency() << "\n";
-   
+
     auto t1 = high_resolution_clock::now();    
     searcher.StartProcessing(region.GetIntervals(), k);
     auto t2 = high_resolution_clock::now();

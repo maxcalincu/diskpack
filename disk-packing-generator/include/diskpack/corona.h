@@ -41,6 +41,8 @@ namespace diskpack {
     void CoronaFill(Corona& corona, std::list<DiskPointer> &packing, size_t starting_index, std::set<CoronaSignaturePointer, decltype(&CoronaSignaturePointerCompare)> &unique_signatures);
 
   public:
+    size_t Size() const;
+    void DisplaySignatures() const;
     ConnectivityGraph(OperatorLookupTable &lookup_table);
     bool HasOverflow() const;
 

@@ -1,5 +1,6 @@
 #include <boost/numeric/interval.hpp>
 #include <memory>
+#include <optional>
 #include <vector>
 
 #pragma once
@@ -88,7 +89,7 @@ public:
     Interval GetMinInterval() const;
     Interval GetMaxInterval() const;
 
-    void Split(std::vector<RadiiRegion> &regions, size_t k = 2, size_t index = -1) const;
+    void Split(std::vector<RadiiRegion> &regions, size_t k, std::optional<size_t> index) const;
     void GridSplit(std::vector<RadiiRegion> &regions, size_t k, size_t index = 0) const;
 };
 struct RadiiCompare {

@@ -6,6 +6,7 @@
 #include <memory>
 #include <numeric>
 #include <queue>
+#include <stdexcept>
 #include <tuple>
 
 namespace diskpack {
@@ -156,6 +157,14 @@ void Corona::Pop() {
   }
 }
 
+size_t ConnectivityGraph::Size() const {
+  size_t result = 0;
+  for (size_t base = 0; base < edges.size(); ++base) {
+    result += signatures[base].size();
+  }
+  return result;
+}
+
 const Disk &Corona::GetBase() { return base; }
 
 void Corona::DisplaySignature() {
@@ -286,12 +295,11 @@ void ConnectivityGraph::CoronaFill(Corona& corona, std::list<DiskPointer> &packi
         // return;
       // }
       CoronaSignaturePointer signature = std::make_shared<CoronaSignature>(corona);
-      // corona.DisplaySignature();
       if (unique_signatures.insert(signature).second) {
         signatures[corona.base.get_type()].push_back(signature);
         Push(*signature);
       }
-      // return;
+      return;
     }
   
     Disk new_disk;
@@ -360,15 +368,18 @@ ConnectivityGraph::ConnectivityGraph(OperatorLookupTable &lookup_table):  diffs(
   }
   RemoveRedundantTriangles();
   UpdateEdges();
-  // for (size_t base = 0; base < edges.size(); ++base) {
-  //   for (auto signature : signatures[base]) {
-  //     std::cerr << base << " : ";
-  //     for (auto index : signature->specimen_indexes) {
-  //       std::cerr << index << " ";
-  //     }
-  //     std::cerr << "\n";
-  //   }
-  // }
+}
+
+void ConnectivityGraph::DisplaySignatures() const {
+    for (size_t base = 0; base < edges.size(); ++base) {
+    for (auto signature : signatures[base]) {
+      std::cerr << base << " : ";
+      for (auto index : signature->specimen_indexes) {
+        std::cerr << index << " ";
+      }
+      std::cerr << "\n";
+    }
+  }
 }
 
 void ConnectivityGraph::Refine(OperatorLookupTable &lookup_table) {
@@ -499,6 +510,8 @@ bool ConnectivityGraph::IsViable() const {
   // (make the picture: it means the coronas allow three mutually adjacent disks i,j,x, which is clearly necessary to have disks i and j in contact)
   
   ///Condition 1: Graph G is connected 
+  
+  // DisplaySignatures();
   {
     std::vector<bool> unvisited(edges.size(), true);
     std::queue<size_t> q;

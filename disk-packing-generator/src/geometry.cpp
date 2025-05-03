@@ -2,13 +2,13 @@
 
 namespace diskpack {
  /// RadiiRegion
- void RadiiRegion::Split(std::vector<RadiiRegion> &regions, size_t k, size_t index) const {
+ void RadiiRegion::Split(std::vector<RadiiRegion> &regions, size_t k, std::optional<size_t> index) const {
   regions.clear();
   regions.reserve(k);
   auto intervals_copy = intervals;
-  auto it = index == -1 ? std::max_element(intervals_copy.begin(), intervals_copy.end(), [](const Interval& a, const Interval& b) {
+  auto it = !index.has_value() ? std::max_element(intervals_copy.begin(), intervals_copy.end(), [](const Interval& a, const Interval& b) {
       return width(a) < width(b);
-  }) : intervals_copy.begin() + index;
+  }) : intervals_copy.begin() + index.value();
 
   auto initial = *it;
   auto sub_width = (initial.upper() - initial.lower())/k;
@@ -44,7 +44,7 @@ if (index + 1 >= intervals.size()) {
   return;
 }
 std::vector<RadiiRegion> children_regions;
-Split(children_regions, k, index);
+Split(children_regions, k, {});
 for (auto &cr : children_regions) {
   cr.GridSplit(regions, k, index + 1);
 }

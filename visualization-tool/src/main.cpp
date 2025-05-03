@@ -132,9 +132,13 @@ The generated packing is stored in an output file (see --output flag). The outpu
     return 1;
 }
   
+  std::sort(radii.begin(), radii.end(), [](const Interval& a, const Interval& b) {
+    return cerlt(a, b);
+  });
   std::cerr << "visualizer called on: " << EncodeRegionsJSON(std::vector<RadiiRegion> {
     {radii}
   });
+
   BasicGenerator generator{radii, packing_radius, precision_upper_bound, size_upper_bound};
 
   auto t1 = high_resolution_clock::now();
