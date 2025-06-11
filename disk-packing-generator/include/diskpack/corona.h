@@ -16,8 +16,13 @@ namespace diskpack {
   using CoronaSignaturePointer = std::shared_ptr<CoronaSignature>;
   using SignatureList = std::list<CoronaSignaturePointer>;
   bool CoronaSignaturePointerCompare(const CoronaSignaturePointer &a, const CoronaSignaturePointer &b);
-
   bool operator< (const CoronaSignaturePointer &a, const CoronaSignaturePointer &b);
+
+  /// ConnectivityGraph checks some graph invariants that must hold in order
+  /// for compact packings to exist. Underlying region can be narrowed (via Refine()).
+  /// The refine operations can be undone via Restore().
+
+  /// The class is used in Searcher to test regions.
 
   class ConnectivityGraph {
   public:
@@ -60,12 +65,11 @@ namespace diskpack {
     friend class ConnectivityGraph;
 
     const Disk &base;                 /// The central disk
-    std::deque<DiskPointer> corona;   /// Peripheral disks. At any moment two consequitive disks are
-                                      /// tangent. (i. e. disks with indexes i and i + 1 where i + 1 <
-                                      /// corona.size())
+    std::deque<DiskPointer> corona;   /// Peripheral disks. At any point two consequitive disks are
+                                      /// tangent (i. e. disks with indexes i and i + 1 where i + 1 <
+                                      /// corona.size()).
 
     std::vector<SSORef> operators_front;  /// Helper objects for compuitng new disks' centers
-    // std::vector<SSORef> reversed_operators_front;
     std::vector<SSORef> operators_back;   ///
     IntervalPair leaf_front;              ///
     IntervalPair leaf_back;               ///
@@ -73,19 +77,17 @@ namespace diskpack {
     std::stack<bool> push_history;        ///
 
     SpiralSimilarityOperator
-    GetOperatorsProduct(                 /// Helper function for compuitng new disks' centers
+    GetOperatorsProduct(
         const size_t &begin, const size_t &end,
         const std::vector<SSORef> &operators) const;
 
-    void GetSortedCorona(
-        const std::list<DiskPointer> &packing);   /// Collects disks tangent to the base
-                                                /// and sorts them anti-clockwise
+    void GetSortedCorona(const std::list<DiskPointer> &packing);    /// Constructs a anti-clockwise sorted corona from scratch.
 
   public:
     Corona(const Disk &b, const std::list<DiskPointer> &packing,
           OperatorLookupTable &lookup_table);
-    bool IsCompleted();                                   /// Checks whether corona is completed
-    bool IsContinuous() const;                            /// Checks the assumption from row 7 and 8
+    bool IsCompleted();                                   /// Checks whether corona is complete
+    bool IsContinuous() const;                            /// Checks the continuity assumption
     bool PeekNewDisk(Disk &new_disk, size_t index, const std::optional<ConnectivityGraph> &graph = std::nullopt);       
                                                           /// Constructs a new disk without changing the
                                                           /// state (eventually)
@@ -96,6 +98,11 @@ namespace diskpack {
   };
 
   ///CoronaSignature
+  /// Two coronas are considered equivalent if, for all pairs (i, j), 
+  /// the count of adjacent positions occupied by disks of type i and j 
+  /// is identical. The signature of a corona is uniquely determined by 
+  /// this adjacency count, and two coronas have the same signature if 
+  /// and only if they are equivalent.
 
   class CoronaSignature {
     const size_t radii_size;
@@ -117,4 +124,4 @@ namespace diskpack {
     bool operator==(const CoronaSignature &other) const;
   };
 
-} // namespace CDP
+} // namespace diskpack

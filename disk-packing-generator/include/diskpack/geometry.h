@@ -11,7 +11,7 @@ using namespace boost::numeric;
 using BaseType = long double; /// using alias in case one wants to swap long
                               /// double with a more precise type
 
-using Interval = interval< /// Interval arithmetic is used
+using Interval = interval<    /// Interval arithmetic is used
     BaseType,
     interval_lib::policies<
         interval_lib::save_state<interval_lib::rounded_transc_exact<BaseType>>,
@@ -46,7 +46,6 @@ struct SpiralSimilarityOperator {
   SpiralSimilarityOperator();
 };
 
-/// Disk class
 class Disk {
   Interval center_x, center_y, radius;
   size_t disk_type;
@@ -75,6 +74,8 @@ bool LessNormCompare(const DiskPointer a, const DiskPointer b);
 
 ///RadiiRegion
 
+/// Contains the description of a rectangular cubiod with some basic functionality
+
 class RadiiRegion {
   std::vector<Interval> intervals;
 public:
@@ -89,8 +90,10 @@ public:
     Interval GetMinInterval() const;
     Interval GetMaxInterval() const;
 
-    void Split(std::vector<RadiiRegion> &regions, size_t k, std::optional<size_t> index) const;
-    void GridSplit(std::vector<RadiiRegion> &regions, size_t k, size_t index = 0) const;
+    void Split(std::vector<RadiiRegion> &regions, size_t k, std::optional<size_t> index) const;   /// Splits the region in k regions of equal volume.
+                                                                                                  /// Only one coordinate is affected.
+    void GridSplit(std::vector<RadiiRegion> &regions, size_t k, size_t index = 0) const;          /// Splits the region in k^n regions. All n coordinates
+                                                                                                  /// are affected.
 };
 struct RadiiCompare {
   bool operator()(const std::vector<Interval> &a, const std::vector<Interval> &b) const;

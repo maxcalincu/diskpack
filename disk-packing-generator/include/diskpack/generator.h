@@ -17,14 +17,13 @@ enum PackingStatus {
                     /// too big)
 };
 
-using QueueType = std::multiset<DiskPointer, decltype(&LessNormCompare)>;    /// Priority queue which supports
-                                                                        /// insertion, exctraction on
-                                                                        /// key. Yields disks which are
-                                                                        /// closer to the (0, 0)
+using QueueType = std::multiset<DiskPointer, decltype(&LessNormCompare)>;     /// Priority queue which supports
+                                                                              /// O(log n) insertion and exctraction.
+                                                                              /// Yields disks which are
+                                                                              /// closer to the (0, 0)
 std::ostream &operator<<(std::ostream &out, PackingStatus status);
 
 
-/// Generator class
 class BasicGenerator {
 protected:
   std::mt19937 g;
@@ -50,21 +49,21 @@ protected:
   void ShuffleIndexes(std::vector<size_t> &shuffle);  /// Grants randomness to the order of backtracking.
                                                       /// Thus the resulting packing is not determenistic.
 
-  void Push(Disk &&new_disk, size_t index);   /// Pushes the disk into the packing and updates the
-                                              /// state of the class
-  void Pop(size_t index);                     /// Pops the disk from the packing and updates the
-                                              /// state of the class. The order is LIFO
+  void Push(Disk &&new_disk, size_t index);           /// Pushes the disk into the packing and updates the
+                                                      /// state of the class
+  void Pop(size_t index);                             /// Pops the disk from the packing and updates the
+                                                      /// state of the class. The order is LIFO
 
   void SetGeneratedRadius(const Disk &furthest_disk);
 
-  bool HasIntersection(const Disk &new_disk) const;         /// Determines whether new_disk (certainly) intersects any other
-                                                            /// disk from the packing
+  bool HasIntersection(const Disk &new_disk) const;   /// Determines whether new_disk (certainly) intersects any other
+                                                      /// disk from the packing
 
-  bool IsInBounds(const Disk &disk) const;          /// Determines whether the disk is
-                                                            /// entirely inside the desired region
-  bool PackingSatisfiesConstraints() const;         /// Assumptions emposed on the packing are checked.
+  bool IsInBounds(const Disk &disk) const;            /// Determines whether the disk is
+                                                      /// entirely inside the desired region
+  bool PackingSatisfiesConstraints() const;           /// Assumptions emposed on the packing are checked.
 
-  bool PackingIsLargeEnough() const;                /// Packing size upper bound checker
+  bool PackingIsLargeEnough() const;                  /// Packing size upper bound checker
 
   
 public:
@@ -93,9 +92,10 @@ public:
                                                               /// (which could be less than packing_radius iff
                                                               /// Generate() returns anything other than
                                                               /// PackingStatus::complete)
+
   const BaseType &GetRadius();                                /// Dumps the packing to a storage once it's completed
   const std::list<DiskPointer> &GetPacking();                 /// Getter function for the generated packing
 
 };
 
-} // namespace CDP
+} // namespace diskpack
