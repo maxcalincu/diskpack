@@ -4,13 +4,12 @@ storage/*.txt
 draft.txt
 .vscode
 .cache
-
-*.png
 visualization-tool/src/__pycache__
 _deps
 *.yaml
 *.json
 *.ipynb
-*.svg
 dumpster
 images/old
+images/gifs
+images/default.svg
