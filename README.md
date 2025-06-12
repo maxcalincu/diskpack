@@ -3,12 +3,9 @@
 C++ library for finding radius configurations that admit compact disk packings on the plane. Implements interval arithmetic and computational geometry methods.
 
 
-  <!-- ![Alt Text](./images/gifs/animation_1.gif) -->
-  
-
-<div style="display: flex; align-items: center;">
-  
-  <div style="flex: 50%; padding: 5px;">
+<table>
+  <tr>
+    <td width="70%" valign="top">
 
 ## 📖 About
 The initial goal is to investigates the problem of finding radius triples `(r, s, t)` where disk packings with radii `{1, r, s, t}` exist such that:
@@ -21,14 +18,14 @@ Relevance:
 - Connects to aperiodic packing problems (Wang tiles)
 - Applications in materials science and crystallography
 
-  </div>
-  <div style="flex: 20%; padding: 5%;">
+  </td>
+    <td width="30%" align="center" valign="middle">
 
-  <!-- ![Alt Text](./images/gifs/animation_2.gif) -->
   <img src="./images/gifs/animation_2.gif" alt="Description" width="200" />
   
-  </div>
-</div>
+  </td>
+  </tr>
+</table>
 
 For a more detailed overview see ``/docs`` [in Russian]
 
