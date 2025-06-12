@@ -7,6 +7,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
-add_subdirectory(disk-packing-generator)
+add_subdirectory(diskpack)
 add_subdirectory(visualization-tool)
 add_subdirectory(configuration-finder)
