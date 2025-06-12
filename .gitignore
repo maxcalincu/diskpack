@@ -11,5 +11,5 @@ _deps
 *.ipynb
 dumpster
 images/old
-images/gifs
+images/gifs/gif*
 images/default.svg
