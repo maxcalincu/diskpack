@@ -6,6 +6,11 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    add_compile_options(-O3)
+else()
+    add_compile_options(-O0)
+endif()
 
 add_subdirectory(diskpack)
 add_subdirectory(visualization-tool)
