@@ -1,5 +1,6 @@
 #include <diskpack/generator.h>
 #include <iostream>
+#include <stdexcept>
 
 std::random_device rd;
 
@@ -162,8 +163,13 @@ void BasicGenerator::Push(Disk &&new_disk, size_t index) {
 }
 
 void BasicGenerator::Pop(size_t index) {
+  auto range = disk_queue.equal_range(packing.back());
+  auto it = std::find(range.first, range.second, packing.back());
+  if (it == range.second) {
+    throw std::logic_error("Packing disk is missing from the queue");
+  }
+  disk_queue.erase(it);
   --frequency_table[index];
-  disk_queue.erase(packing.back());
   packing.pop_back();
 }
 
