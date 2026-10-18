@@ -19,12 +19,12 @@ void DSUFilter::Unite(size_t x, size_t y) {
   if (x == y) {
     return;
   }
+  if (component_size[x] > component_size[y]) {
+    std::swap(x, y);
+  }
   for (size_t j = 0; j < vals[x].size(); ++j) {
     vals[y][j] = Interval{std::min(vals[y][j].lower(), vals[x][j].lower()),
                           std::max(vals[y][j].upper(), vals[x][j].upper())};
-  }
-  if (component_size[x] > component_size[y]) {
-    std::swap(x, y);
   }
   parent[x] = y;
   component_size[y] += component_size[x];
