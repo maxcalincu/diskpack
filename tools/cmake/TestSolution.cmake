@@ -1,0 +1,7 @@
+function(add_catch TARGET)
+  add_executable(${TARGET} ${ARGN})
+  if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(${TARGET} PRIVATE -Wall -Wextra -Werror -Wpedantic)
+  endif()
+  target_link_libraries(${TARGET} PRIVATE catch_main)
+endfunction()

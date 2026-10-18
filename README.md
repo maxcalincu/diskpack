@@ -78,3 +78,64 @@ $ cd build
 $ make finder
 $ ./finder --help
 ```
+
+## Tests
+
+Tests use Catch2 3.5.2, a shared `catch_main`, and `add_catch` CMake targets,
+following [assembly-graphs](https://github.com/maxcalincu/assembly-graphs).
+They require the normal project dependencies and CMake >= 3.16. Catch2 is
+downloaded automatically during the first configuration with testing enabled.
+
+Run the following commands from the repository root.
+
+### Run all tests
+
+```bash
+cmake -S . -B build-tests -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON
+cmake --build build-tests --target test_diskpack -j 4
+cmake -E chdir build-tests ctest --output-on-failure -j 4
+```
+
+`test_diskpack` includes the library tests and integration tests of `finder` and
+`visualizer`. Both CLI executables are built automatically. CTest prints the
+output of failed tests and returns a nonzero exit code if any test fails.
+
+### Run one module or selected cases
+
+Select cases from the aggregate executable using Catch2 tags:
+
+```bash
+./build-tests/test_diskpack "[geometry]"
+./build-tests/test_diskpack "[regression]"
+./build-tests/test_diskpack "[cli]"
+```
+
+Available module tags are `[regions]`, `[geometry]`, `[corona]`, `[graph]`,
+`[generator]`, `[search]`, `[codec]`, and `[cli]`. List all cases with:
+
+```bash
+./build-tests/test_diskpack --list-tests
+```
+
+As in assembly-graphs, each module also has its own executable. Build the desired
+target before running it:
+
+```bash
+cmake --build build-tests --target test_geometry test_cli -j 4
+./build-tests/test_geometry
+./build-tests/test_cli
+```
+
+### Run with sanitizers
+
+The `ASAN` configuration enables AddressSanitizer and UndefinedBehaviorSanitizer:
+
+```bash
+cmake -S . -B build-asan -DCMAKE_BUILD_TYPE=ASAN -DBUILD_TESTING=ON
+cmake --build build-asan --target test_diskpack -j 4
+cmake -E chdir build-asan ctest --output-on-failure -j 4
+```
+
+CLI tests require a POSIX shell (Linux or macOS). Use `-DBUILD_TESTING=OFF` when
+configuring a build without tests. For coverage reporting and the scope of the
+checks, see [tests/README.md](tests/README.md).
