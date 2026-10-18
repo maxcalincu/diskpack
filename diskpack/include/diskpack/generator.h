@@ -12,7 +12,7 @@ enum PackingStatus {
   invalid,          /// no packing with these radii exists
   precision_error,  /// signals that precision upper bound was violated
                     /// (one might need to decrease the packing radius in this case)
-  corona_error      /// signals that corona assumption was violated
+  corona_error      /// signals that corona order or continuity could not be established
                     /// (most likely due to the fact that precision upper bound is
                     /// too big)
 };

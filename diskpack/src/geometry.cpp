@@ -1,4 +1,5 @@
 #include <diskpack/geometry.h>
+#include <cmath>
 
 namespace diskpack {
 
@@ -215,23 +216,19 @@ bool LessNormCompare(const DiskPointer a, const DiskPointer b) {
          median(sqrt(b->get_norm()) + b->get_radius());
 }
 
-DiskClockwiseCompare::DiskClockwiseCompare(const Disk &base) {
+DiskCounterclockwiseCompare::DiskCounterclockwiseCompare(const Disk &base) {
   center_x = base.get_center_x();
   center_y = base.get_center_y();
 }
-bool DiskClockwiseCompare::operator()(const DiskPointer a,
-                                      const DiskPointer b) const {
-  auto ax = a->get_center_x() - center_x;
-  auto ay = a->get_center_y() - center_y;
-  auto bx = b->get_center_x() - center_x;
-  auto by = b->get_center_y() - center_y;
-  return (
-      cergt(ax, 0.0L) && zero_in(ay)
-          ? true
-          : (cergt(bx, 0.0L) && zero_in(by)
-                 ? false
-                 : (cerlt(ay * by, 0.0L) ? cergt(ay, 0.0L)
-                                         : cergt(by * ax - ay * bx, 0.0L))));
+bool DiskCounterclockwiseCompare::operator()(const DiskPointer a,
+                                             const DiskPointer b) const {
+  auto angle = [this](const DiskPointer &disk) {
+    auto x = median(disk->get_center_x() - center_x);
+    auto y = median(disk->get_center_y() - center_y);
+    auto value = std::atan2(y, x);
+    return value < 0 ? value + 2 * std::acos(BaseType{-1}) : value;
+  };
+  return angle(a) < angle(b);
 }
 
 inline size_t OperatorLookupTable::GetIndex(size_t i, size_t j, size_t k) {

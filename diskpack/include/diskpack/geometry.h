@@ -120,10 +120,12 @@ public:
   OperatorLookupTable(const std::vector<Interval> &radii_);
 };
 
-struct DiskClockwiseCompare {
+// Orders finite representative directions counterclockwise. Interval certainty
+// of the resulting cyclic order is checked separately by Corona.
+struct DiskCounterclockwiseCompare {
   Interval center_x;
   Interval center_y;
-  DiskClockwiseCompare(const Disk &base);
+  DiskCounterclockwiseCompare(const Disk &base);
   bool operator()(const DiskPointer a, const DiskPointer b) const;
 };
 

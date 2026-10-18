@@ -65,6 +65,7 @@ namespace diskpack {
     friend class ConnectivityGraph;
 
     const Disk &base;                 /// The central disk
+    bool has_valid_order = false;
     std::deque<DiskPointer> corona;   /// Peripheral disks. At any point two consequitive disks are
                                       /// tangent (i. e. disks with indexes i and i + 1 where i + 1 <
                                       /// corona.size()).
@@ -81,7 +82,7 @@ namespace diskpack {
         const size_t &begin, const size_t &end,
         const std::vector<SSORef> &operators) const;
 
-    void GetSortedCorona(const std::list<DiskPointer> &packing);    /// Constructs a anti-clockwise sorted corona from scratch.
+    bool GetSortedCorona(const std::list<DiskPointer> &packing);    /// Constructs and certifies a counterclockwise cyclic order.
 
   public:
     Corona(const Disk &b, const std::list<DiskPointer> &packing,

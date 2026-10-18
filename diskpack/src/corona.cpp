@@ -1,9 +1,81 @@
 #include <diskpack/corona.h>
+#include <cmath>
 #include <functional>
 #include <iostream>
 #include <numeric>
 
 namespace diskpack {
+
+namespace {
+struct Direction {
+  Interval x, y;
+};
+
+Direction GetDirection(const Disk &base, const DiskPointer &disk) {
+  return {disk->get_center_x() - base.get_center_x(),
+          disk->get_center_y() - base.get_center_y()};
+}
+
+bool IsFinite(const Interval &value) {
+  return !empty(value) && std::isfinite(value.lower()) &&
+         std::isfinite(value.upper());
+}
+
+bool IsUsable(const Direction &direction) {
+  return IsFinite(direction.x) && IsFinite(direction.y) &&
+         std::isfinite(median(direction.x)) &&
+         std::isfinite(median(direction.y)) &&
+         (!zero_in(direction.x) || !zero_in(direction.y));
+}
+
+int HalfPlane(BaseType x, BaseType y) {
+  return y > 0 || (y == 0 && x > 0) ? 0 : 1;
+}
+
+bool HasCertifiedOrder(const Disk &base,
+                       const std::deque<DiskPointer> &disks) {
+  std::vector<Direction> directions;
+  for (const auto &disk : disks) {
+    directions.push_back(GetDirection(base, disk));
+  }
+  for (size_t i = 0; i < directions.size(); ++i) {
+    const auto &a = directions[i];
+    auto ax = median(a.x), ay = median(a.y);
+    for (size_t j = i + 1; j < directions.size(); ++j) {
+      const auto &b = directions[j];
+      auto cross = a.x * b.y - a.y * b.x;
+      auto dot = a.x * b.x + a.y * b.y;
+      // Directions can exchange cyclic positions only by sharing a positive
+      // ray. A nonzero cross product or a negative dot product excludes that.
+      // Opposite rays are allowed, including when their cross contains zero.
+      if (!IsFinite(cross) || !IsFinite(dot) ||
+          (zero_in(cross) && !cerlt(dot, 0.0L))) {
+        return false;
+      }
+
+      // Certify the order of the representatives too: atan2 only proposes an
+      // order, and rounding or equal angular keys must not decide correctness.
+      auto bx = median(b.x), by = median(b.y);
+      auto a_half = HalfPlane(ax, ay), b_half = HalfPlane(bx, by);
+      if (a_half > b_half) {
+        return false;
+      }
+      if (a_half == b_half) {
+        auto representative_cross = Interval{ax} * Interval{by} -
+                                    Interval{ay} * Interval{bx};
+        if (!IsFinite(representative_cross) ||
+            !cergt(representative_cross, 0.0L)) {
+          return false;
+        }
+      }
+    }
+  }
+  // Each direction rectangle is connected and excludes the origin. Since no
+  // pair can share a positive ray, its certified representative cyclic order
+  // holds throughout all of the rectangles, independently of the angular cut.
+  return true;
+}
+} // namespace
 
 /// Corona
 
@@ -30,6 +102,9 @@ Corona::GetOperatorsProduct(const size_t &begin, const size_t &end,
 }
 
 bool Corona::IsCompleted() {
+  if (!has_valid_order) {
+    return false;
+  }
   assert(!corona.empty());
   auto cross_product =
       (corona.back()->get_center_x() - base.get_center_x()) *
@@ -51,23 +126,36 @@ bool Corona::IsCompleted() {
   return check_intersect;
 }
 
-void Corona::GetSortedCorona(const std::list<DiskPointer> &packing) {
+bool Corona::GetSortedCorona(const std::list<DiskPointer> &packing) {
   assert(corona.empty());
   for (auto &disk : packing) {
     if (base.tangent(*disk)) {
       corona.push_back(disk);
     }
   }
-  std::sort(corona.begin(), corona.end(), DiskClockwiseCompare{base});
+  if (corona.empty() ||
+      std::any_of(corona.begin(), corona.end(), [this](const DiskPointer &disk) {
+        return !IsUsable(GetDirection(base, disk));
+      })) {
+    return false;
+  }
+  std::sort(corona.begin(), corona.end(), DiskCounterclockwiseCompare{base});
+  if (!HasCertifiedOrder(base, corona)) {
+    return false;
+  }
   for (size_t i = 0; i + 1 < corona.size(); ++i) {
     if (!corona[i]->tangent(*corona[i + 1])) {
       std::rotate(corona.begin(), corona.begin() + i + 1, corona.end());
-      return;
+      return true;
     }
   }
+  return true;
 }
 
 bool Corona::IsContinuous() const {
+  if (!has_valid_order) {
+    return false;
+  }
   for (size_t i = 0; i + 1 < corona.size(); ++i) {
     if (!corona[i]->tangent(*corona[i + 1])) {
       return false;
@@ -82,7 +170,10 @@ Corona::Corona(const Disk &b, const std::list<DiskPointer> &packing,
   operators_back.reserve(DEFAULT_OPERATORS_SIZE);
   operators_front.reserve(DEFAULT_OPERATORS_SIZE);
 
-  GetSortedCorona(packing);
+  has_valid_order = GetSortedCorona(packing);
+  if (!has_valid_order) {
+    return;
+  }
   assert(!corona.empty());
   leaf_front =
       IntervalPair{corona.front()->get_center_x() - base.get_center_x(),
@@ -94,6 +185,9 @@ Corona::Corona(const Disk &b, const std::list<DiskPointer> &packing,
 
 bool Corona::PeekNewDisk(Disk &new_disk, size_t index,
                          const std::optional<ConnectivityGraph> &graph) {
+  if (!has_valid_order) {
+    return false;
+  }
   bool use_front = corona.front()->precision() < corona.back()->precision();
 
   if (graph.has_value()) {
@@ -264,6 +358,10 @@ void ConnectivityGraph::CoronaFill(
     Corona &corona, std::list<DiskPointer> &packing, size_t starting_index,
     std::set<CoronaSignaturePointer, decltype(&CoronaSignaturePointerCompare)>
         &unique_signatures) {
+  if (!corona.has_valid_order) {
+    is_broken = true;
+    return;
+  }
   auto &radii = corona.lookup_table.radii;
   if (corona.IsCompleted()) {
     CoronaSignaturePointer signature =
